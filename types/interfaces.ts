@@ -10,7 +10,12 @@ export interface Entity extends BaseEntity {
   speed: number;
 }
 
-export interface SpaceshipInterface extends Entity {
-  angle: number;
-  getCenter: () => { xCenter: number; yCenter: number };
+export interface MouseInterface {
+  x: number | null;
+  y: number | null;
+}
+
+export interface Center {
+  xCenter: number;
+  yCenter: number;
 }

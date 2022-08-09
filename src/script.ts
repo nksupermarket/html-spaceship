@@ -1,6 +1,8 @@
-import Spaceship from './Spaceship';
-import move, { applyInertia, updatePosition } from './utils/move';
+import Spaceship from './classes/Spaceship';
 import { Direction } from '../types/types';
+import KeyPress from './classes/KeyPress';
+import Shootables from './classes/Shootables';
+import { checkIfInsideDiameter } from './utils/checkCollision';
 
 const canvas = document.querySelector('canvas') as HTMLCanvasElement;
 
@@ -11,30 +13,42 @@ function changeCanvasSize() {
 
 changeCanvasSize();
 
-const spaceship = Spaceship(
-  {
-    y: window.innerHeight / 2,
-    x: window.innerWidth / 2,
-    height: 100,
-    width: 50,
-  },
-  20
-);
+const spaceship = new Spaceship({
+  y: window.innerHeight / 2,
+  x: window.innerWidth / 2,
+});
 
-const keyPress: Record<keyof typeof move, boolean> = {
-  left: false,
-  right: false,
-  up: false,
-  down: false,
-};
+const shootables = new Shootables();
+
+const keyPress = new KeyPress();
 
 function update() {
-  let dir: keyof typeof move;
-  for (dir in move) {
-    if (keyPress[dir]) move[dir](spaceship);
+  let dir: Direction;
+  for (dir in spaceship.move) {
+    if (keyPress.keys[dir].pressed) spaceship.move[dir]();
   }
-  updatePosition(spaceship);
-  applyInertia(spaceship);
+  if (keyPress.keys.click.pressed) spaceship.shoot();
+
+  shootables.list.forEach((se) => {
+    const collision = checkIfInsideDiameter(spaceship, se);
+    if (collision) spaceship.velocity = { x: 0, y: 0 };
+  });
+  spaceship.updatePosition({ x: window.innerWidth, y: window.innerHeight });
+
+  spaceship.applyInertia();
+
+  spaceship.bullets.forEach((b) => {
+    b.updatePosition();
+    shootables.list.forEach((shootable) => {
+      const collision = checkIfInsideDiameter(shootable, b);
+      if (collision) {
+        spaceship.removeBullet(b.id);
+        shootable.lifePoints -= 10;
+      }
+    });
+  });
+
+  shootables.removeDeadEls();
 }
 
 const mouse: {
@@ -48,28 +62,10 @@ const mouse: {
 function draw() {
   const c = canvas.getContext('2d');
   if (!c) return;
-  const { xCenter, yCenter } = spaceship.getCenter();
-
-  if (mouse.x !== null && mouse.y !== null) {
-    const dx = mouse.x - xCenter;
-    const dy = mouse.y - yCenter;
-    const theta = Math.atan2(dy, dx) - Math.PI / 2;
-
-    spaceship.angle = theta;
-  }
 
   c.clearRect(0, 0, window.innerWidth, window.innerHeight);
-  //   c.save();
-
-  c.setTransform(1, 0, 0, 1, 0, 0);
-
-  c.translate(xCenter, yCenter);
-  c.rotate(spaceship.angle);
-  c.translate(-xCenter, -yCenter);
-
-  c.fillStyle = '#FF0000';
-  c.fillRect(spaceship.x, spaceship.y, spaceship.width, spaceship.height);
-
+  spaceship.bullets.forEach((b) => b.draw(c));
+  spaceship.draw(c, mouse);
   //   c.restore();
 }
 
@@ -86,43 +82,45 @@ window.addEventListener('mousemove', (e) => {
   mouse.y = e.clientY;
 });
 
-window.addEventListener('keydown', (e) => {
-  switch (e.key) {
+function toggleKeypress(key: string, bool: boolean) {
+  switch (key) {
+    case 'a':
     case 'ArrowLeft': {
-      keyPress.left = true;
+      keyPress.keys.left.pressed = bool;
       break;
     }
+    case 'd':
     case 'ArrowRight': {
-      keyPress.right = true;
+      keyPress.keys.right.pressed = bool;
       break;
     }
+    case 'w':
     case 'ArrowUp': {
-      keyPress.up = true;
+      keyPress.keys.up.pressed = bool;
       break;
     }
+    case 's':
     case 'ArrowDown': {
-      keyPress.down = true;
+      keyPress.keys.down.pressed = bool;
       break;
     }
   }
+}
+
+window.addEventListener('mousedown', () => {
+  keyPress.keys.click.pressed = true;
+  if (!keyPress.keys.click.timer)
+    keyPress.setTimer('click', () => (spaceship.shotAvailable = true), 200);
+});
+window.addEventListener('mouseup', () => {
+  spaceship.shotAvailable = true;
+  keyPress.keys.click.pressed = false;
+  if (keyPress.keys.click.timer) keyPress.removeTimer();
+});
+
+window.addEventListener('keydown', (e) => {
+  toggleKeypress(e.key, true);
 });
 window.addEventListener('keyup', (e) => {
-  switch (e.key) {
-    case 'ArrowLeft': {
-      keyPress.left = false;
-      break;
-    }
-    case 'ArrowRight': {
-      keyPress.right = false;
-      break;
-    }
-    case 'ArrowUp': {
-      keyPress.up = false;
-      break;
-    }
-    case 'ArrowDown': {
-      keyPress.down = false;
-      break;
-    }
-  }
+  toggleKeypress(e.key, false);
 });
