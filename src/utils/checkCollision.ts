@@ -1,3 +1,4 @@
+import { XY } from '../../types/types';
 import Entity from '../classes/Entity';
 
 export function checkIfInsideDiameter(rectOne: Entity, rectTwo: Entity) {
@@ -10,4 +11,8 @@ export function checkIfInsideDiameter(rectOne: Entity, rectTwo: Entity) {
     rectTwo.x <= rectOne.x + rectOne.width;
 
   return insideX && insideY;
+}
+
+export function checkIfWithinBounds(edge: XY, bounds: XY) {
+  return edge.x > 0 && edge.x < bounds.x && edge.y > 0 && edge.y < bounds.y;
 }

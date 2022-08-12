@@ -27,5 +27,6 @@ export default class DeltaTimer {
 
   stop() {
     this.timeout && clearTimeout(this.timeout);
+    this.timeout = null;
   }
 }

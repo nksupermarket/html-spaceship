@@ -23,19 +23,26 @@ const shootables = new Shootables();
 const keyPress = new KeyPress();
 
 function update() {
+  spaceship.rotate(mouse, { x: window.innerWidth, y: window.innerHeight });
+
+  let keyPressed = false;
+
   let dir: Direction;
   for (dir in spaceship.move) {
-    if (keyPress.keys[dir].pressed) spaceship.move[dir]();
+    if (keyPress.keys[dir].pressed) {
+      keyPressed = true;
+      spaceship.move[dir]({ x: window.innerWidth, y: window.innerHeight });
+    }
   }
   if (keyPress.keys.click.pressed) spaceship.shoot();
 
-  shootables.list.forEach((se) => {
-    const collision = checkIfInsideDiameter(spaceship, se);
-    if (collision) spaceship.velocity = { x: 0, y: 0 };
-  });
-  spaceship.updatePosition({ x: window.innerWidth, y: window.innerHeight });
-
-  spaceship.applyInertia();
+  spaceship.updatePosition();
+  if (
+    !keyPressed &&
+    (spaceship.velocity.x || spaceship.velocity.y) &&
+    !spaceship.decelerationTimer.timeout
+  )
+    spaceship.decelerate();
 
   spaceship.bullets.forEach((b) => {
     b.updatePosition();
@@ -65,7 +72,7 @@ function draw() {
 
   c.clearRect(0, 0, window.innerWidth, window.innerHeight);
   spaceship.bullets.forEach((b) => b.draw(c));
-  spaceship.draw(c, mouse);
+  spaceship.draw(c);
   //   c.restore();
 }
 
