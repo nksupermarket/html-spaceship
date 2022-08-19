@@ -3,6 +3,7 @@ import { Direction } from '../types/types';
 import KeyPress from './classes/KeyPress';
 import Shootables from './classes/Shootables';
 import { checkIfInsideDiameter } from './utils/checkCollision';
+import { DIRECTIONS } from './utils/constants';
 
 const canvas = document.querySelector('canvas') as HTMLCanvasElement;
 
@@ -28,19 +29,22 @@ function update() {
   let keyPressed = false;
 
   let dir: Direction;
-  for (dir in spaceship.move) {
+  for (dir of DIRECTIONS) {
     if (keyPress.keys[dir].pressed) {
       keyPressed = true;
-      spaceship.move[dir]({ x: window.innerWidth, y: window.innerHeight });
+      spaceship.move(dir);
+      spaceship.resetDeceleration();
     }
   }
   if (keyPress.keys.click.pressed) spaceship.shoot();
 
-  spaceship.updatePosition();
+  spaceship.updatePosition({ x: window.innerWidth, y: window.innerHeight });
+
   if (
     !keyPressed &&
     (spaceship.velocity.x || spaceship.velocity.y) &&
-    !spaceship.decelerationTimer.timeout
+    spaceship.decelerationTime >= 0 &&
+    spaceship.decelerationTime <= 1
   )
     spaceship.decelerate();
 
