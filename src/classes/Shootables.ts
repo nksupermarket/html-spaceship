@@ -12,6 +12,15 @@ export default class Shootables {
     );
   }
 
+  getList() {
+    this.list = Array.from(document.querySelectorAll('.shootable_el')).map(
+      (el) => {
+        const { x, y, height, width } = el.getBoundingClientRect();
+        return new ShootableEl(x, y, width, height, el);
+      }
+    );
+  }
+
   removeDeadEls() {
     this.list = this.list.filter((se) => {
       if (se.lifePoints <= 0) {
@@ -20,5 +29,9 @@ export default class Shootables {
 
       return se.lifePoints > 0;
     });
+  }
+
+  draw(c: CanvasRenderingContext2D) {
+    this.list.forEach((el) => el.draw(c));
   }
 }

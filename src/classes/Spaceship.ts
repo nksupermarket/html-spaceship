@@ -1,9 +1,12 @@
 import { Center, MouseInterface } from '../../types/interfaces';
-import { Direction, Edges, Entries, XY } from '../../types/types';
-import { checkIfWithinBounds } from '../utils/checkCollision';
+import { Direction, XY } from '../../types/types';
+import {
+  checkIfWithinBounds,
+  checkShipEdgeCollision,
+} from '../utils/checkCollision';
 import Bullet from './Bullet';
-import DeltaTimer from './DeltaTimer';
 import Entity from './Entity';
+import ShootableEl from './ShootableEl';
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
@@ -14,40 +17,45 @@ export default class Spaceship extends Entity {
   shotAvailable: boolean;
   bullets: Bullet[];
   decelerationTime: number;
+  acceleration: number;
 
   constructor({ x, y }: XY) {
     super(x, y, 100, 50, 20);
     this.angle = (90 * Math.PI) / 2;
     this.shotAvailable = true;
     this.decelerationTime = 0;
-
+    this.acceleration = 0.05;
     this.bullets = [];
   }
 
   move(dir: Direction) {
     this.resetDeceleration();
-
+    console.log(this.velocity.x);
     switch (dir) {
       case 'left': {
-        this.velocity.x = -this.speed;
+        this.velocity.x -= this.acceleration * this.speed;
+        if (this.velocity.x < -this.speed) this.velocity.x = -this.speed;
         break;
       }
       case 'right': {
-        this.velocity.x = this.speed;
+        this.velocity.x += this.acceleration * this.speed;
+        if (this.velocity.x > this.speed) this.velocity.x = this.speed;
         break;
       }
       case 'up': {
-        this.velocity.y = -this.speed;
+        this.velocity.y -= this.acceleration * this.speed;
+        if (this.velocity.y < -this.speed) this.velocity.y = -this.speed;
         break;
       }
       case 'down': {
-        this.velocity.y = this.speed;
+        this.velocity.y += this.acceleration * this.speed;
+        if (this.velocity.y > this.speed) this.velocity.y = this.speed;
         break;
       }
     }
   }
 
-  bounce(bounds: XY) {
+  bounce(bounds: XY, rects: ShootableEl[]) {
     const edges = this.getOutermostPoints(this.angle);
 
     for (let i = 0; i < edges.length; i++) {
@@ -60,13 +68,28 @@ export default class Spaceship extends Entity {
           )
         ) {
           this.velocity[axis] = -this.velocity[axis];
+          return;
         }
+
+        rects.forEach((rect) => {
+          const collision = checkShipEdgeCollision(
+            {
+              y: edges[i].y + this.velocity.y,
+              x: edges[i].x + this.velocity.x,
+            },
+            rect
+          );
+          if (collision) {
+            this.velocity.x = -this.velocity.x;
+            this.velocity.y = -this.velocity.y;
+          }
+        });
       });
     }
   }
 
-  updatePosition(bounds: XY) {
-    this.bounce(bounds);
+  updatePosition(bounds: XY, rects: ShootableEl[]) {
+    this.bounce(bounds, rects);
 
     this.x += this.velocity.x;
     this.y += this.velocity.y;
@@ -132,7 +155,7 @@ export default class Spaceship extends Entity {
         this.decelerationTime += 0.15;
         break;
       default:
-        this.decelerationTime += 0.03;
+        this.decelerationTime += 0.07;
     }
 
     if (this.decelerationTime > 1) {

@@ -18,4 +18,10 @@ export default class ShootableEl extends Entity {
   removeEl() {
     this.el.className = 'removed';
   }
+
+  draw(c: CanvasRenderingContext2D) {
+    c.fillStyle = 'black';
+    c.rect(this.x, this.y, this.width, this.height);
+    c.stroke();
+  }
 }

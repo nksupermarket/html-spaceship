@@ -5,7 +5,8 @@ import Shootables from './classes/Shootables';
 import { checkIfInsideDiameter } from './utils/checkCollision';
 import { DIRECTIONS } from './utils/constants';
 
-const canvas = document.querySelector('canvas') as HTMLCanvasElement;
+const canvas = document.createElement('canvas');
+document.body.appendChild(canvas);
 
 function changeCanvasSize() {
   canvas.height = window.innerHeight;
@@ -38,7 +39,10 @@ function update() {
   }
   if (keyPress.keys.click.pressed) spaceship.shoot();
 
-  spaceship.updatePosition({ x: window.innerWidth, y: window.innerHeight });
+  spaceship.updatePosition(
+    { x: window.innerWidth, y: window.innerHeight },
+    shootables.list
+  );
 
   if (
     !keyPressed &&
@@ -77,6 +81,8 @@ function draw() {
   c.clearRect(0, 0, window.innerWidth, window.innerHeight);
   spaceship.bullets.forEach((b) => b.draw(c));
   spaceship.draw(c);
+  shootables.draw(c);
+
   //   c.restore();
 }
 

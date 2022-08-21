@@ -1,4 +1,4 @@
-import { XY } from '../../types/types';
+import { Edges, XY } from '../../types/types';
 import Entity from '../classes/Entity';
 
 export function checkIfInsideDiameter(rectOne: Entity, rectTwo: Entity) {
@@ -11,6 +11,13 @@ export function checkIfInsideDiameter(rectOne: Entity, rectTwo: Entity) {
     rectTwo.x <= rectOne.x + rectOne.width;
 
   return insideX && insideY;
+}
+
+export function checkShipEdgeCollision(edge: XY, rect: Entity) {
+  const collideY = rect.y <= edge.y && rect.y + rect.height > edge.y;
+  const collideX = rect.x <= edge.x && rect.x + rect.width > edge.x;
+
+  return collideY && collideX;
 }
 
 export function checkIfWithinBounds(edge: XY, bounds: XY) {
