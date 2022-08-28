@@ -1,71 +1,13 @@
-import Spaceship from './classes/Spaceship';
-import { Direction } from '../types/types';
 import KeyPress from './classes/KeyPress';
-import Shootables from './classes/Shootables';
-import { checkIfInsideDiameter } from './utils/checkCollision';
-import { DIRECTIONS } from './utils/constants';
+import Canvas from './classes/Canvas';
+import ShootableList from './classes/ShootableList';
+import Boundary from './classes/Boundary';
+import BoundaryList from './classes/BoundaryList';
 
-const canvas = document.createElement('canvas');
-document.body.appendChild(canvas);
-
-function changeCanvasSize() {
-  canvas.height = window.innerHeight;
-  canvas.width = window.innerWidth;
-}
-
-changeCanvasSize();
-
-const spaceship = new Spaceship({
-  y: window.innerHeight / 2,
-  x: window.innerWidth / 2,
-});
-
-const shootables = new Shootables();
-
+const canvas = new Canvas();
+const boundaries = new BoundaryList();
+const shootables = new ShootableList();
 const keyPress = new KeyPress();
-
-function update() {
-  spaceship.rotate(mouse, { x: window.innerWidth, y: window.innerHeight });
-
-  let keyPressed = false;
-
-  let dir: Direction;
-  for (dir of DIRECTIONS) {
-    if (keyPress.keys[dir].pressed) {
-      keyPressed = true;
-      spaceship.move(dir);
-      spaceship.resetDeceleration();
-    }
-  }
-  if (keyPress.keys.click.pressed) spaceship.shoot();
-
-  spaceship.updatePosition(
-    { x: window.innerWidth, y: window.innerHeight },
-    shootables.list
-  );
-
-  if (
-    !keyPressed &&
-    (spaceship.velocity.x || spaceship.velocity.y) &&
-    spaceship.decelerationTime >= 0 &&
-    spaceship.decelerationTime <= 1
-  )
-    spaceship.decelerate();
-
-  spaceship.bullets.forEach((b) => {
-    b.updatePosition();
-    shootables.list.forEach((shootable) => {
-      const collision = checkIfInsideDiameter(shootable, b);
-      if (collision) {
-        spaceship.removeBullet(b.id);
-        shootable.lifePoints -= 10;
-      }
-    });
-  });
-
-  shootables.removeDeadEls();
-}
-
 const mouse: {
   x: null | number;
   y: null | number;
@@ -73,26 +15,60 @@ const mouse: {
   x: null,
   y: null,
 };
+let windowY = 0;
 
-function draw() {
-  const c = canvas.getContext('2d');
-  if (!c) return;
+function scroll() {
+  if (
+    keyPress.keys.down.pressed &&
+    (canvas.spaceship.y > window.innerHeight * 0.9 ||
+      canvas.spaceship.y + canvas.spaceship.height > window.innerHeight * 0.9)
+  ) {
+    document.documentElement.scrollTop += window.innerHeight;
+    if (
+      document.body.clientHeight - window.innerHeight !==
+      document.documentElement.scrollTop
+    )
+      canvas.spaceship.y = 0.1 * window.innerHeight;
+  }
 
-  c.clearRect(0, 0, window.innerWidth, window.innerHeight);
-  spaceship.bullets.forEach((b) => b.draw(c));
-  spaceship.draw(c);
-  shootables.draw(c);
-
-  //   c.restore();
+  if (
+    keyPress.keys.up.pressed &&
+    (canvas.spaceship.y < window.innerHeight * 0.1 ||
+      canvas.spaceship.y + canvas.spaceship.height < window.innerHeight * 0.1)
+  ) {
+    document.documentElement.scrollTop -= window.innerHeight;
+    if (document.documentElement.scrollTop)
+      canvas.spaceship.y = 0.9 * window.innerHeight;
+  }
 }
 
 function animate() {
-  update();
-  draw();
+  canvas.update(mouse, keyPress, boundaries, shootables);
+  canvas.draw();
+  scroll();
   requestAnimationFrame(animate);
 }
 
 animate();
+
+window.addEventListener('scroll', () => {
+  const oldY = windowY;
+  windowY = window.scrollY;
+  const diff = oldY - windowY;
+
+  shootables.list.forEach((el) => {
+    el.y += diff;
+  });
+
+  boundaries.list.forEach((el) => {
+    el.y += diff;
+  });
+});
+
+window.addEventListener('resize', () => {
+  shootables.list = shootables.getList();
+  canvas.setCorrectSize();
+});
 
 window.addEventListener('mousemove', (e) => {
   mouse.x = e.clientX;
@@ -124,13 +100,19 @@ function toggleKeypress(key: string, bool: boolean) {
   }
 }
 
-window.addEventListener('mousedown', () => {
+window.addEventListener('mousedown', (e) => {
+  e.preventDefault();
   keyPress.keys.click.pressed = true;
   if (!keyPress.keys.click.timer)
-    keyPress.setTimer('click', () => (spaceship.shotAvailable = true), 200);
+    keyPress.setTimer(
+      'click',
+      () => (canvas.spaceship.shotAvailable = true),
+      200
+    );
 });
-window.addEventListener('mouseup', () => {
-  spaceship.shotAvailable = true;
+window.addEventListener('mouseup', (e) => {
+  e.preventDefault();
+  canvas.spaceship.shotAvailable = true;
   keyPress.keys.click.pressed = false;
   if (keyPress.keys.click.timer) keyPress.removeTimer();
 });

@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body,
 html {
   margin: 0;
@@ -25,4 +29,37 @@ section {
   height: 100vh;
   width: 100vw;
   padding: 20%;
+}
+
+.shake {
+  animation: tilt-shaking 0.1s;
+}
+@keyframes tilt-shaking {
+  0% {
+    transform: rotate(0deg);
+  }
+  12% {
+    transform: rotate(5deg);
+  }
+  24% {
+    transform: rotate(0eg);
+  }
+  36% {
+    transform: rotate(-5deg);
+  }
+  48% {
+    transform: rotate(0deg);
+  }
+  60% {
+    transform: rotate(5deg);
+  }
+  72% {
+    transform: rotate(0eg);
+  }
+  84% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }

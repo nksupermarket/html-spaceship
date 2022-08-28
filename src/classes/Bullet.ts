@@ -5,8 +5,11 @@ let count = 0;
 
 export default class Bullet extends Entity {
   id: number;
+  speed: 5;
+
   constructor({ x, y }: XY, slope: XY) {
-    super(x, y, 5, 5, 5);
+    super(x, y, 5, 5);
+    this.speed = 5;
     this.velocity = { x: slope.x / this.speed, y: slope.y / this.speed };
     this.id = count++;
   }

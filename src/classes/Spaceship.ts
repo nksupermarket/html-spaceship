@@ -4,9 +4,9 @@ import {
   checkIfWithinBounds,
   checkShipEdgeCollision,
 } from '../utils/checkCollision';
+import Boundary from './Boundary';
 import Bullet from './Bullet';
 import Entity from './Entity';
-import ShootableEl from './ShootableEl';
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
@@ -18,9 +18,11 @@ export default class Spaceship extends Entity {
   bullets: Bullet[];
   decelerationTime: number;
   acceleration: number;
+  speed: number;
 
   constructor({ x, y }: XY) {
-    super(x, y, 100, 50, 20);
+    super(x, y, 100, 50);
+    this.speed = 20;
     this.angle = (90 * Math.PI) / 2;
     this.shotAvailable = true;
     this.decelerationTime = 0;
@@ -30,7 +32,6 @@ export default class Spaceship extends Entity {
 
   move(dir: Direction) {
     this.resetDeceleration();
-    console.log(this.velocity.x);
     switch (dir) {
       case 'left': {
         this.velocity.x -= this.acceleration * this.speed;
@@ -55,8 +56,8 @@ export default class Spaceship extends Entity {
     }
   }
 
-  bounce(bounds: XY, rects: ShootableEl[]) {
-    const edges = this.getOutermostPoints(this.angle);
+  bounce(bounds: XY, rects: Boundary[]) {
+    const edges = this.getCorners(this.angle);
 
     for (let i = 0; i < edges.length; i++) {
       const axis = ['x', 'y'] as unknown as (keyof XY)[];
@@ -88,7 +89,7 @@ export default class Spaceship extends Entity {
     }
   }
 
-  updatePosition(bounds: XY, rects: ShootableEl[]) {
+  updatePosition(bounds: XY, rects: Boundary[]) {
     this.bounce(bounds, rects);
 
     this.x += this.velocity.x;
@@ -129,7 +130,7 @@ export default class Spaceship extends Entity {
     c.setTransform(1, 0, 0, 1, 0, 0);
   }
 
-  rotate(mouse: MouseInterface, bounds: XY) {
+  alignToMouse(mouse: MouseInterface, bounds: XY) {
     if (mouse.x === null || mouse.y === null) return;
     const { xCenter, yCenter } = this.getCenter();
 
@@ -137,7 +138,7 @@ export default class Spaceship extends Entity {
     const dy = mouse.y - yCenter;
     const theta = Math.atan2(dy, dx) - Math.PI / 2;
 
-    const edgesAfterRotation = this.getOutermostPoints(theta);
+    const edgesAfterRotation = this.getCorners(theta);
     for (let i = 0; i < edgesAfterRotation.length; i++) {
       if (!checkIfWithinBounds(edgesAfterRotation[i], bounds)) return;
     }
@@ -179,7 +180,7 @@ export default class Spaceship extends Entity {
     this.bullets = this.bullets.filter((b) => b.id !== id);
   }
 
-  getOutermostPoints(angle: number) {
+  getCorners(angle: number) {
     const { xCenter, yCenter } = this.getCenter();
     const edges = [
       // topLeft:
@@ -204,15 +205,62 @@ export default class Spaceship extends Entity {
       },
     ];
 
-    const afterRotation = edges.reduce<XY[]>((acc, curr) => {
-      acc.push({
-        x: curr.x * Math.cos(angle) - curr.y * Math.sin(angle) + xCenter,
-        y: curr.x * Math.sin(angle) + curr.y * Math.cos(angle) + yCenter,
-      });
-
-      return acc;
-    }, []);
+    const afterRotation = edges.map((p) => ({
+      x: p.x * Math.cos(angle) - p.y * Math.sin(angle) + xCenter,
+      y: p.x * Math.sin(angle) + p.y * Math.cos(angle) + yCenter,
+    }));
 
     return afterRotation;
+  }
+
+  getVertices() {
+    const { xCenter, yCenter } = this.getCenter();
+
+    const vertices = [
+      [
+        {
+          x: this.x - xCenter,
+          y: this.y - yCenter,
+        },
+        { x: this.x - xCenter, y: this.y + this.height - yCenter },
+      ],
+      [
+        {
+          x: this.x - xCenter,
+          y: this.y - yCenter,
+        },
+        {
+          x: this.x + this.width - xCenter,
+          y: this.y - yCenter,
+        },
+      ],
+      [
+        {
+          x: this.x + this.width - xCenter,
+          y: this.y - yCenter,
+        },
+        {
+          x: this.x + this.width - xCenter,
+          y: this.y + this.height - yCenter,
+        },
+      ],
+      [
+        {
+          x: this.x - xCenter,
+          y: this.y + this.height - yCenter,
+        },
+        {
+          x: this.x + this.width - xCenter,
+          y: this.y + this.height - yCenter,
+        },
+      ],
+    ].map((v) =>
+      v.map((p) => ({
+        x: p.x * Math.cos(this.angle) - p.y * Math.sin(this.angle) + xCenter,
+        y: p.x * Math.sin(this.angle) + p.y * Math.cos(this.angle) + yCenter,
+      }))
+    );
+
+    return vertices;
   }
 }
