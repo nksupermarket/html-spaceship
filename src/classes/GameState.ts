@@ -1,42 +1,27 @@
-import { Direction, Mouse } from '../../types/types';
-import { DIRECTIONS } from '../utils/constants';
-import Shootables from './ShootableList';
-import Boundary from './Boundary';
 import Spaceship from './Spaceship';
-import { checkIfInsideRect } from '../utils/checkCollision';
+import { Mouse, Direction } from '../../types/types';
+import { DIRECTIONS } from '../utils/constants';
 import KeyPress from './KeyPress';
 import BoundaryList from './BoundaryList';
+import ShootableList from './ShootableList';
+import { checkIfInsideRect } from '../utils/checkCollision';
 
-export default class Canvas {
-  el: HTMLCanvasElement;
+export default class GameState {
+  spaceship: Spaceship;
+  boundaries: BoundaryList;
+  shootables: ShootableList;
 
   constructor() {
-    this.el = document.createElement('canvas');
-    document.body.appendChild(this.el);
-    this.setCorrectSize();
+    this.spaceship = new Spaceship({
+      y: window.innerHeight / 2,
+      x: window.innerWidth / 2,
+    });
+
+    this.boundaries = new BoundaryList();
+    this.shootables = new ShootableList();
   }
 
-  setCorrectSize() {
-    this.el.height = window.innerHeight;
-    this.el.width = window.innerWidth;
-  }
-
-  draw(spaceship: Spaceship) {
-    const c = this.el.getContext('2d');
-    if (!c) return;
-
-    c.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-    spaceship.bullets.forEach((b) => b.draw(c));
-    spaceship.draw(c);
-  }
-
-  update(
-    mouse: Mouse,
-    keyPress: KeyPress,
-    boundaries: BoundaryList,
-    shootables: Shootables
-  ) {
+  update(mouse: Mouse, keyPress: KeyPress) {
     this.spaceship.alignToMouse(mouse, {
       x: window.innerWidth,
       y: window.innerHeight,
@@ -56,7 +41,7 @@ export default class Canvas {
 
     this.spaceship.updatePosition(
       { x: window.innerWidth, y: window.innerHeight },
-      boundaries.list
+      this.boundaries.list
     );
 
     if (
@@ -69,7 +54,7 @@ export default class Canvas {
 
     this.spaceship.bullets.forEach((b) => {
       b.updatePosition();
-      shootables.list.forEach((shootable) => {
+      this.shootables.list.forEach((shootable) => {
         const collision = checkIfInsideRect(shootable, b);
         if (collision) {
           this.spaceship.removeBullet(b.id);
@@ -78,8 +63,8 @@ export default class Canvas {
       });
     });
 
-    shootables.removeDeadEls();
-    boundaries.updateSizes();
-    boundaries.removeEmptyBoundaries();
+    this.shootables.removeDeadEls();
+    this.boundaries.updateSizes();
+    this.boundaries.removeEmptyBoundaries();
   }
 }

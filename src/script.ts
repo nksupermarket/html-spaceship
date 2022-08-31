@@ -23,12 +23,13 @@ function scroll() {
     (canvas.spaceship.y > window.innerHeight * 0.9 ||
       canvas.spaceship.y + canvas.spaceship.height > window.innerHeight * 0.9)
   ) {
-    document.documentElement.scrollTop += window.innerHeight;
-    if (
-      document.body.clientHeight - window.innerHeight !==
-      document.documentElement.scrollTop
-    )
-      canvas.spaceship.y = 0.1 * window.innerHeight;
+    document.documentElement.scrollTop += 20;
+    canvas.spaceship.velocity.y = 0;
+    //   if (
+    //     document.body.clientHeight - window.innerHeight !==
+    //     document.documentElement.scrollTop
+    //   )
+    //     canvas.spaceship.y = 0.1 * window.innerHeight;
   }
 
   if (

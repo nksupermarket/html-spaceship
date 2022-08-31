@@ -1,5 +1,8 @@
+import { Center } from '../../types/interfaces';
 import { Edges, XY } from '../../types/types';
 import Entity from '../classes/Entity';
+import Shootable from '../classes/Shootable';
+import { distToSegment } from './mathStuff';
 
 export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
   const insideY =
@@ -25,51 +28,52 @@ export function checkIfWithinBounds(edge: XY, bounds: XY) {
 }
 
 export function checkCollisionBtwnCircleAndRect(
-  circle: Entity,
-  rectEdges: XY[],
+  circle: Shootable,
+  rectCorners: XY[],
   rectVertices: XY[][]
-) {}
+) {
+  const centerOfCircle = circle.getCenter();
 
-function pointInRectangle(point: XY, rectEdges: XY[]) {
-  const { min, max } = rectEdges.reduce<{ max: XY; min: XY }>(
+  return (
+    pointInRectangle(centerOfCircle, rectCorners) ||
+    intersectCircle(centerOfCircle, circle.width / 2, rectVertices)
+  );
+}
+
+function pointInRectangle(centerOfCircle: XY, rectCorners: XY[]) {
+  const { min, max } = rectCorners.reduce<{ max: XY; min: XY }>(
     (acc, curr) => {
-      if (curr.x > max.x) max.x = curr.x;
-      if (curr.x < min.x) min.x = curr.x;
+      const { min, max } = acc;
 
-      if (curr.y > max.y) max.y = curr.y;
-      if (curr.y < min.y) min.y = curr.y;
+      if (!max || curr.x > max.x) max.x = curr.x;
+      if (!min || curr.x < min.x) min.x = curr.x;
+
+      if (!max || curr.y > max.y) max.y = curr.y;
+      if (!min || curr.y < min.y) min.y = curr.y;
 
       return acc;
     },
-    {
-      max: {
-        x: 0,
-        y: 0,
-      },
-      min: {
-        x: 0,
-        y: 0,
-      },
-    }
+    { max: {}, min: {} } as { max: XY; min: XY }
   );
 
-  if (point.x < min.x || point.x > max.x || point.y < min.y || point.y > max.y)
-    return false;
+  return (
+    centerOfCircle.x > min.x &&
+    centerOfCircle.x < max.x &&
+    centerOfCircle.y > min.y &&
+    centerOfCircle.y < max.y
+  );
 }
 
-function intersectCircle(centerOfCircle: XY, r: number, vertices: XY[][]) {
-  return vertices.reduce((acc, curr) => {
-    const [{ x: x1, y: y1 }, { x: x2, y: y2 }] = curr;
+function intersectCircle(centerOfCircle: XY, r: number, rectVertices: XY[][]) {
+  for (const v of rectVertices) {
+    const [p1, p2] = v;
 
     if (
-      Math.abs(
-        (x2 - x1) * (y1 - centerOfCircle.y) -
-          (x1 - centerOfCircle.x) * (y2 - y1)
-      ) /
-        Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) <
-      r
+      // distance between centerOfCenter and line is less than radius
+      distToSegment(centerOfCircle, p1, p2) < r
     )
       return true;
-    return false;
-  }, false);
+  }
+
+  return false;
 }

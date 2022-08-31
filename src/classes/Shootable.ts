@@ -1,4 +1,5 @@
 import Entity from './Entity';
+import { XY } from '../../types/types';
 
 export default class Shootable extends Entity {
   lifePoints: number = 50;
@@ -28,5 +29,9 @@ export default class Shootable extends Entity {
     this.el.classList.remove('shake');
     void this.el.offsetWidth;
     this.el.classList.add('shake');
+  }
+
+  getCenter(): XY {
+    return { x: this.x + this.width / 2, y: this.y + this.height / 2 };
   }
 }

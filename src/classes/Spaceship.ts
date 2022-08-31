@@ -180,7 +180,7 @@ export default class Spaceship extends Entity {
     this.bullets = this.bullets.filter((b) => b.id !== id);
   }
 
-  getCorners(angle: number) {
+  getCorners(angle = this.angle) {
     const { xCenter, yCenter } = this.getCenter();
     const edges = [
       // topLeft:
