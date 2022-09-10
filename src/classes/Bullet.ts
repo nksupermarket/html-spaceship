@@ -15,6 +15,8 @@ export default class Bullet extends Entity {
   }
 
   draw(c: CanvasRenderingContext2D) {
+    c.globalCompositeOperation = 'source-over';
+
     c.fillStyle = 'black';
     c.fillRect(this.x, this.y, this.height, this.width);
   }

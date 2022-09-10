@@ -1,8 +1,9 @@
 import { Center } from '../../types/interfaces';
 import { Edges, XY } from '../../types/types';
+import Boundary from '../classes/Boundary';
 import Entity from '../classes/Entity';
 import Shootable from '../classes/Shootable';
-import { distToSegment } from './mathStuff';
+import { distToSegment } from './math';
 
 export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
   const insideY =
@@ -28,7 +29,7 @@ export function checkIfWithinBounds(edge: XY, bounds: XY) {
 }
 
 export function checkCollisionBtwnCircleAndRect(
-  circle: Shootable,
+  circle: Shootable | Boundary,
   rectCorners: XY[],
   rectVertices: XY[][]
 ) {

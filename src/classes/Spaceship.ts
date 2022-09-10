@@ -1,16 +1,21 @@
 import { Center, MouseInterface } from '../../types/interfaces';
 import { Direction, XY } from '../../types/types';
 import {
+  checkCollisionBtwnCircleAndRect,
   checkIfWithinBounds,
   checkShipEdgeCollision,
 } from '../utils/checkCollision';
 import Boundary from './Boundary';
 import Bullet from './Bullet';
 import Entity from './Entity';
+import spaceshipPic from '../assets/rocket-lightmode.png';
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
 }
+
+export const spaceshipImg = new Image();
+spaceshipImg.src = spaceshipPic;
 
 export default class Spaceship extends Entity {
   angle: number;
@@ -56,11 +61,12 @@ export default class Spaceship extends Entity {
     }
   }
 
-  bounce(bounds: XY, rects: Boundary[]) {
+  bounce(bounds: XY, boundaries: Boundary[]) {
     const edges = this.getCorners(this.angle);
 
+    // handle browser edges
     for (let i = 0; i < edges.length; i++) {
-      const axis = ['x', 'y'] as unknown as (keyof XY)[];
+      const axis = ['x', 'y'] as (keyof XY)[];
       axis.forEach((axis) => {
         if (
           !checkIfWithinBounds(
@@ -71,29 +77,47 @@ export default class Spaceship extends Entity {
           this.velocity[axis] = -this.velocity[axis];
           return;
         }
+      });
+    }
 
-        rects.forEach((rect) => {
-          const collision = checkShipEdgeCollision(
+    // handle element boundaries
+    boundaries.forEach((boundary) => {
+      let collision;
+
+      if (boundary.circle) {
+        collision = checkCollisionBtwnCircleAndRect(
+          boundary,
+          this.getCorners(),
+          this.getVertices()
+        );
+      } else {
+        for (let i = 0; i < edges.length; i++) {
+          collision = checkShipEdgeCollision(
             {
               y: edges[i].y + this.velocity.y,
               x: edges[i].x + this.velocity.x,
             },
-            rect
+            boundary
           );
-          if (collision) {
-            this.velocity.x = -this.velocity.x;
-            this.velocity.y = -this.velocity.y;
-          }
-        });
-      });
-    }
+          if (collision) break;
+        }
+      }
+
+      if (collision) {
+        this.velocity.x = -this.velocity.x;
+        this.velocity.y = -this.velocity.y;
+      }
+    });
   }
 
-  updatePosition(bounds: XY, rects: Boundary[]) {
-    this.bounce(bounds, rects);
-
+  updateXPosition() {
     this.x += this.velocity.x;
+    if (this.x < 0) this.x = 0;
+  }
+
+  updateYPosition() {
     this.y += this.velocity.y;
+    if (this.y < 0) this.y = 0;
   }
 
   shoot() {
@@ -124,8 +148,7 @@ export default class Spaceship extends Entity {
     c.rotate(this.angle);
     c.translate(-xCenter, -yCenter);
 
-    c.fillStyle = '#FF0000';
-    c.fillRect(this.x, this.y, this.width, this.height);
+    c.drawImage(spaceshipImg, this.x, this.y, this.width, this.height);
 
     c.setTransform(1, 0, 0, 1, 0, 0);
   }

@@ -2,7 +2,7 @@ import { Direction, Mouse } from '../../types/types';
 import { DIRECTIONS } from '../utils/constants';
 import Shootables from './ShootableList';
 import Boundary from './Boundary';
-import Spaceship from './Spaceship';
+import Spaceship, { spaceshipImg } from './Spaceship';
 import { checkIfInsideRect } from '../utils/checkCollision';
 import KeyPress from './KeyPress';
 import BoundaryList from './BoundaryList';
@@ -12,7 +12,7 @@ export default class Canvas {
 
   constructor() {
     this.el = document.createElement('canvas');
-    document.body.appendChild(this.el);
+    document.documentElement.appendChild(this.el);
     this.setCorrectSize();
   }
 

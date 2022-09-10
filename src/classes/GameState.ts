@@ -1,10 +1,11 @@
 import Spaceship from './Spaceship';
-import { Mouse, Direction } from '../../types/types';
+import { Mouse, Direction, XY } from '../../types/types';
 import { DIRECTIONS } from '../utils/constants';
 import KeyPress from './KeyPress';
 import BoundaryList from './BoundaryList';
 import ShootableList from './ShootableList';
 import { checkIfInsideRect } from '../utils/checkCollision';
+import { getTranslateY } from '../utils/misc';
 
 export default class GameState {
   spaceship: Spaceship;
@@ -12,15 +13,22 @@ export default class GameState {
   shootables: ShootableList;
   mouse: Mouse;
   keyPress: KeyPress;
-  scrollBoundary: number;
+  scrollBoundary: { top: number; bottom: number };
+  scrollSpeed: number;
 
-  constructor() {
-    this.spaceship = new Spaceship({
+  constructor(
+    startPos = {
       y: window.innerHeight / 2,
       x: window.innerWidth / 2,
-    });
+    }
+  ) {
+    this.spaceship = new Spaceship(startPos);
 
-    this.scrollBoundary = window.innerHeight * 0.8;
+    this.scrollSpeed = 0;
+    this.scrollBoundary = {
+      top: window.innerHeight * 0.3,
+      bottom: window.innerHeight * 0.7,
+    };
     this.boundaries = new BoundaryList();
     this.shootables = new ShootableList();
     this.keyPress = new KeyPress();
@@ -44,23 +52,96 @@ export default class GameState {
         keyPressed = true;
         this.spaceship.move(dir);
         this.spaceship.resetDeceleration();
+        if (dir === 'up') this.scrollSpeed = 0;
       }
     }
     if (this.keyPress.keys.click.pressed) this.spaceship.shoot();
 
-    if (this.spaceship.y + this.spaceship.velocity.y > this.scrollBoundary) {
-      document.documentElement.scrollTop += this.spaceship.velocity.y;
-      console.log(
-        (document.documentElement.scrollTop += this.spaceship.velocity.y),
-        this.spaceship.velocity.y
-      );
-      this.spaceship.velocity.y = 0;
-    }
-
-    this.spaceship.updatePosition(
+    // handle spaceship running into boundaries
+    this.spaceship.bounce(
       { x: window.innerWidth, y: window.innerHeight },
       this.boundaries.list
     );
+
+    // handle scroll
+    function shift(this: GameState, translateVal: number) {
+      document.body.style.transform = `translateY(${translateVal}px)`;
+      this.shootables.list.forEach((el) => {
+        el.y -= this.spaceship.velocity.y;
+      });
+
+      this.boundaries.list.forEach((el) => {
+        el.y -= this.spaceship.velocity.y;
+      });
+    }
+    if (
+      this.spaceship.y < this.scrollBoundary.bottom &&
+      this.spaceship.y + this.spaceship.velocity.y > this.scrollBoundary.bottom
+    ) {
+      const translateVal =
+        getTranslateY(document.body) - this.spaceship.velocity.y;
+
+      if (
+        Math.abs(translateVal) <
+        document.documentElement.scrollHeight - window.innerHeight
+      ) {
+        shift.call(this, translateVal);
+      }
+    }
+    console.log(
+      {
+        y: this.spaceship.y,
+        boundary: this.scrollBoundary.top,
+        newY: this.spaceship.y + this.spaceship.velocity.y,
+      },
+      this.spaceship.y > this.scrollBoundary.top,
+      this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.top
+    );
+    if (
+      this.spaceship.y > this.scrollBoundary.top &&
+      this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.top
+    ) {
+      const translateVal =
+        getTranslateY(document.body) - this.spaceship.velocity.y;
+      console.log(translateVal);
+      if (translateVal < 0) {
+        shift.call(this, translateVal);
+      }
+    }
+
+    const translateVal = Math.floor(Math.abs(getTranslateY(document.body)));
+    if (
+      this.spaceship.y + this.spaceship.velocity.y > this.scrollBoundary.top &&
+      this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.bottom
+    ) {
+      this.spaceship.updateYPosition();
+    }
+    if (translateVal < 30 && this.keyPress.keys.up.pressed) {
+      this.spaceship.updateYPosition();
+    }
+    if (
+      translateVal + 30 >
+      document.documentElement.scrollHeight - window.innerHeight
+    ) {
+      this.spaceship.updateYPosition();
+    }
+    if (
+      this.spaceship.y < this.scrollBoundary.top &&
+      this.keyPress.keys.down.pressed
+    ) {
+      this.spaceship.updateYPosition();
+    }
+    this.spaceship.updateXPosition();
+
+    /*
+    needs to scroll down when spaceship is approaching scrollBoundary.bottom and spaceship isn't at the last section
+    vice-versa for scrolling up
+
+    if page is scrolled all the way up, spaceship should be able to pass scrollBoundary.top
+    same for bottom
+
+    if spaceship is at past scrollBoundary.top, page should not scroll until spaceship hits scrollBoundary.bottom
+    */
 
     // handle deceleration
     if (

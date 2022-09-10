@@ -1,8 +1,4 @@
-import KeyPress from './classes/KeyPress';
 import Canvas from './classes/Canvas';
-import ShootableList from './classes/ShootableList';
-import Boundary from './classes/Boundary';
-import BoundaryList from './classes/BoundaryList';
 import GameState from './classes/GameState';
 
 const canvas = new Canvas();
@@ -11,25 +7,10 @@ const gameState = new GameState();
 function animate() {
   gameState.update();
   canvas.draw(gameState.spaceship);
-  scroll();
   requestAnimationFrame(animate);
 }
 
 animate();
-
-// window.addEventListener('scroll', () => {
-//   const oldY = windowY;
-//   windowY = window.scrollY;
-//   const diff = oldY - windowY;
-
-//   shootables.list.forEach((el) => {
-//     el.y += diff;
-//   });
-
-//   boundaries.list.forEach((el) => {
-//     el.y += diff;
-//   });
-// });
 
 window.addEventListener('resize', () => {
   gameState.shootables.list = gameState.shootables.getList();
