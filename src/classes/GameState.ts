@@ -88,22 +88,14 @@ export default class GameState {
         shift.call(this, translateVal);
       }
     }
-    console.log(
-      {
-        y: this.spaceship.y,
-        boundary: this.scrollBoundary.top,
-        newY: this.spaceship.y + this.spaceship.velocity.y,
-      },
-      this.spaceship.y > this.scrollBoundary.top,
-      this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.top
-    );
+
     if (
       this.spaceship.y > this.scrollBoundary.top &&
-      this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.top
+      Math.floor(this.spaceship.y + this.spaceship.velocity.y) <=
+        this.scrollBoundary.top
     ) {
       const translateVal =
         getTranslateY(document.body) - this.spaceship.velocity.y;
-      console.log(translateVal);
       if (translateVal < 0) {
         shift.call(this, translateVal);
       }
@@ -111,37 +103,30 @@ export default class GameState {
 
     const translateVal = Math.floor(Math.abs(getTranslateY(document.body)));
     if (
-      this.spaceship.y + this.spaceship.velocity.y > this.scrollBoundary.top &&
-      this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.bottom
+      // spaceship is in between scrollBoundaries
+      Math.floor(this.spaceship.y + this.spaceship.velocity.y) >
+        this.scrollBoundary.top &&
+      Math.floor(this.spaceship.y + this.spaceship.velocity.y) <
+        this.scrollBoundary.bottom
     ) {
       this.spaceship.updateYPosition();
-    }
-    if (translateVal < 30 && this.keyPress.keys.up.pressed) {
+    } else if (
+      // when we are on top of the page, we want to be able to go beyond scrollBoundary.top
+      translateVal < 30 &&
+      Math.floor(this.spaceship.y + this.spaceship.velocity.y) <
+        this.scrollBoundary.bottom
+    ) {
       this.spaceship.updateYPosition();
-    }
-    if (
+    } else if (
+      // when we are on bottom of page, we want to be able to go beyond scrollBoundary.bottom
       translateVal + 30 >
-      document.documentElement.scrollHeight - window.innerHeight
-    ) {
-      this.spaceship.updateYPosition();
-    }
-    if (
-      this.spaceship.y < this.scrollBoundary.top &&
-      this.keyPress.keys.down.pressed
+        document.documentElement.scrollHeight - window.innerHeight &&
+      Math.floor(this.spaceship.y + this.spaceship.velocity.y) >
+        this.scrollBoundary.top
     ) {
       this.spaceship.updateYPosition();
     }
     this.spaceship.updateXPosition();
-
-    /*
-    needs to scroll down when spaceship is approaching scrollBoundary.bottom and spaceship isn't at the last section
-    vice-versa for scrolling up
-
-    if page is scrolled all the way up, spaceship should be able to pass scrollBoundary.top
-    same for bottom
-
-    if spaceship is at past scrollBoundary.top, page should not scroll until spaceship hits scrollBoundary.bottom
-    */
 
     // handle deceleration
     if (

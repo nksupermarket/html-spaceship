@@ -141,15 +141,11 @@ export default class Spaceship extends Entity {
 
   draw(c: CanvasRenderingContext2D) {
     const { xCenter, yCenter } = this.getCenter();
-
     c.setTransform(1, 0, 0, 1, 0, 0);
-
     c.translate(xCenter, yCenter);
     c.rotate(this.angle);
     c.translate(-xCenter, -yCenter);
-
     c.drawImage(spaceshipImg, this.x, this.y, this.width, this.height);
-
     c.setTransform(1, 0, 0, 1, 0, 0);
   }
 

@@ -1,6 +1,8 @@
 import Canvas from './classes/Canvas';
 import GameState from './classes/GameState';
 
+document.documentElement.style.overflow = 'hidden';
+
 const canvas = new Canvas();
 const gameState = new GameState();
 
