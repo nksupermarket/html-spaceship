@@ -9,13 +9,13 @@ import Boundary from './Boundary';
 import Bullet from './Bullet';
 import Entity from './Entity';
 import spaceshipPic from '../assets/rocket-lightmode.png';
+import { createImage } from '../utils/misc';
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
 }
 
-export const spaceshipImg = new Image();
-spaceshipImg.src = spaceshipPic;
+export const spaceshipImg = createImage(spaceshipPic);
 
 export default class Spaceship extends Entity {
   angle: number;
