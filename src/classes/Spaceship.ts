@@ -15,6 +15,60 @@ function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
 }
 
+const drawRoundRect = function (
+  c: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: {
+    upperLeft?: number;
+    upperRight?: number;
+    lowerLeft?: number;
+    lowerRight?: number;
+  },
+  fill: boolean,
+  stroke: boolean
+) {
+  const cornerRadius = {
+    upperLeft: 0,
+    upperRight: 0,
+    lowerLeft: 0,
+    lowerRight: 0,
+  };
+  if (typeof stroke == 'undefined') {
+    stroke = true;
+  }
+  if (typeof radius === 'object') {
+    let side: keyof typeof radius;
+    for (side in radius) {
+      const radVal = radius[side];
+      if (radVal === undefined) return;
+      cornerRadius[side] = radVal;
+    }
+  }
+
+  c.beginPath();
+  c.moveTo(x + cornerRadius.upperLeft, y);
+  c.lineTo(x + width - cornerRadius.upperRight, y);
+  c.quadraticCurveTo(x + width, y, x + width, y + cornerRadius.upperRight);
+  c.lineTo(x + width, y + height - cornerRadius.lowerRight);
+  c.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - cornerRadius.lowerRight,
+    y + height
+  );
+  c.lineTo(x + cornerRadius.lowerLeft, y + height);
+  c.quadraticCurveTo(x, y + height, x, y + height - cornerRadius.lowerLeft);
+  c.lineTo(x, y + cornerRadius.upperLeft);
+  c.quadraticCurveTo(x, y, x + cornerRadius.upperLeft, y);
+  c.closePath();
+  if (fill) {
+    c.fill();
+  }
+};
+
 export const spaceshipImg = createImage(spaceshipPic);
 
 export default class Spaceship extends Entity {
@@ -23,15 +77,17 @@ export default class Spaceship extends Entity {
   bullets: Bullet[];
   decelerationTime: number;
   acceleration: number;
+  accelerating: boolean;
   speed: number;
 
   constructor({ x, y }: XY) {
     super(x, y, 100, 50);
-    this.speed = 20;
+    this.speed = 10;
     this.angle = (90 * Math.PI) / 2;
     this.shotAvailable = true;
     this.decelerationTime = 0;
     this.acceleration = 0.05;
+    this.accelerating = false;
     this.bullets = [];
   }
 
@@ -62,22 +118,15 @@ export default class Spaceship extends Entity {
   }
 
   bounce(bounds: XY, boundaries: Boundary[]) {
-    const edges = this.getCorners(this.angle);
+    const edges = this.getCorners('with velocity');
 
     // handle browser edges
     for (let i = 0; i < edges.length; i++) {
-      const axis = ['x', 'y'] as (keyof XY)[];
-      axis.forEach((axis) => {
-        if (
-          !checkIfWithinBounds(
-            { ...edges[i], [axis]: edges[i][axis] + this.velocity[axis] },
-            bounds
-          )
-        ) {
-          this.velocity[axis] = -this.velocity[axis];
-          return;
-        }
-      });
+      if (!checkIfWithinBounds(edges[i], bounds)) {
+        this.velocity.x = -this.velocity.x;
+        this.velocity.y = -this.velocity.y;
+        return;
+      }
     }
 
     // handle element boundaries
@@ -87,18 +136,12 @@ export default class Spaceship extends Entity {
       if (boundary.circle) {
         collision = checkCollisionBtwnCircleAndRect(
           boundary,
-          this.getCorners(),
-          this.getVertices()
+          this.getCorners('with velocity'),
+          this.getVertices('with velocity')
         );
       } else {
         for (let i = 0; i < edges.length; i++) {
-          collision = checkShipEdgeCollision(
-            {
-              y: edges[i].y + this.velocity.y,
-              x: edges[i].x + this.velocity.x,
-            },
-            boundary
-          );
+          collision = checkShipEdgeCollision(edges[i], boundary);
           if (collision) break;
         }
       }
@@ -132,9 +175,12 @@ export default class Spaceship extends Entity {
     this.shotAvailable = false;
   }
 
-  getCenter(): Center {
-    const xCenter = this.x + this.width / 2;
-    const yCenter = this.y + this.height / 2;
+  getCenter(withVelocity?: 'with velocity'): Center {
+    const x = withVelocity ? this.x + this.velocity.x : this.x;
+    const y = withVelocity ? this.y + this.velocity.y : this.y;
+
+    const xCenter = x + this.width / 2;
+    const yCenter = y + this.height / 2;
 
     return { xCenter, yCenter };
   }
@@ -147,6 +193,73 @@ export default class Spaceship extends Entity {
     c.translate(-xCenter, -yCenter);
     c.drawImage(spaceshipImg, this.x, this.y, this.width, this.height);
     c.setTransform(1, 0, 0, 1, 0, 0);
+
+    if (
+      this.accelerating ||
+      (this.decelerationTime > 0 && this.decelerationTime < 1)
+      // want to show flames as ship is decelerating but not after
+    ) {
+      this.drawFlames(c);
+
+      console.log(this.decelerationTime);
+    }
+  }
+
+  drawFlames(c: CanvasRenderingContext2D) {
+    const { xCenter, yCenter } = this.getCenter();
+
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.translate(xCenter, yCenter);
+    c.rotate(this.angle);
+    c.translate(-xCenter, -yCenter);
+
+    const length =
+      Math.max(
+        Math.abs(this.velocity.x / this.speed),
+        Math.abs(this.velocity.y / this.speed)
+      ) * 40;
+
+    drawRoundRect(
+      c,
+      this.x + 27,
+      this.y - 5 - length / 1.5,
+      3,
+      length / 1.5,
+      {
+        upperLeft: 2,
+        upperRight: 2,
+      },
+      true,
+      true
+    );
+    drawRoundRect(
+      c,
+      this.x + 23,
+      this.y - 5 - length,
+      3,
+      length,
+      {
+        upperLeft: 2,
+        upperRight: 2,
+      },
+      true,
+      true
+    );
+    drawRoundRect(
+      c,
+      this.x + 19,
+      this.y - 5 - length / 1.5,
+      3,
+      length / 1.5,
+      {
+        upperLeft: 2,
+        upperRight: 2,
+      },
+      true,
+      true
+    );
+
+    c.setTransform(1, 0, 0, 1, 0, 0);
   }
 
   alignToMouse(mouse: MouseInterface, bounds: XY) {
@@ -157,7 +270,7 @@ export default class Spaceship extends Entity {
     const dy = mouse.y - yCenter;
     const theta = Math.atan2(dy, dx) - Math.PI / 2;
 
-    const edgesAfterRotation = this.getCorners(theta);
+    const edgesAfterRotation = this.getCorners(undefined, theta);
     for (let i = 0; i < edgesAfterRotation.length; i++) {
       if (!checkIfWithinBounds(edgesAfterRotation[i], bounds)) return;
     }
@@ -199,28 +312,32 @@ export default class Spaceship extends Entity {
     this.bullets = this.bullets.filter((b) => b.id !== id);
   }
 
-  getCorners(angle = this.angle) {
-    const { xCenter, yCenter } = this.getCenter();
+  getCorners(withVelocity?: 'with velocity', angle = this.angle) {
+    const { xCenter, yCenter } = this.getCenter(withVelocity);
+
+    const x = withVelocity ? this.x + this.velocity.x : this.x;
+    const y = withVelocity ? this.y + this.velocity.y : this.y;
+
     const edges = [
       // topLeft:
       {
-        x: this.x - xCenter,
-        y: this.y - yCenter,
+        x: x - xCenter,
+        y: y - yCenter,
       },
       // bottomLeft:
       {
-        x: this.x - xCenter,
-        y: this.y + this.height - yCenter,
+        x: x - xCenter,
+        y: y + this.height - yCenter,
       },
       // topRight:
       {
-        x: this.x + this.width - xCenter,
-        y: this.y - yCenter,
+        x: x + this.width - xCenter,
+        y: y - yCenter,
       },
       // bottomRight:
       {
-        x: this.x + this.width - xCenter,
-        y: this.y + this.height - yCenter,
+        x: x + this.width - xCenter,
+        y: y + this.height - yCenter,
       },
     ];
 
@@ -232,45 +349,48 @@ export default class Spaceship extends Entity {
     return afterRotation;
   }
 
-  getVertices() {
-    const { xCenter, yCenter } = this.getCenter();
+  getVertices(withVelocity?: 'with velocity') {
+    const { xCenter, yCenter } = this.getCenter(withVelocity);
+
+    const x = withVelocity ? this.x + this.velocity.x : this.x;
+    const y = withVelocity ? this.y + this.velocity.y : this.y;
 
     const vertices = [
       [
         {
-          x: this.x - xCenter,
-          y: this.y - yCenter,
+          x: x - xCenter,
+          y: y - yCenter,
         },
-        { x: this.x - xCenter, y: this.y + this.height - yCenter },
+        { x: x - xCenter, y: y + this.height - yCenter },
       ],
       [
         {
-          x: this.x - xCenter,
-          y: this.y - yCenter,
+          x: x - xCenter,
+          y: y - yCenter,
         },
         {
-          x: this.x + this.width - xCenter,
-          y: this.y - yCenter,
-        },
-      ],
-      [
-        {
-          x: this.x + this.width - xCenter,
-          y: this.y - yCenter,
-        },
-        {
-          x: this.x + this.width - xCenter,
-          y: this.y + this.height - yCenter,
+          x: x + this.width - xCenter,
+          y: y - yCenter,
         },
       ],
       [
         {
-          x: this.x - xCenter,
-          y: this.y + this.height - yCenter,
+          x: x + this.width - xCenter,
+          y: y - yCenter,
         },
         {
-          x: this.x + this.width - xCenter,
-          y: this.y + this.height - yCenter,
+          x: x + this.width - xCenter,
+          y: y + this.height - yCenter,
+        },
+      ],
+      [
+        {
+          x: x - xCenter,
+          y: y + this.height - yCenter,
+        },
+        {
+          x: x + this.width - xCenter,
+          y: y + this.height - yCenter,
         },
       ],
     ].map((v) =>

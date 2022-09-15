@@ -4,7 +4,10 @@ import { DIRECTIONS } from '../utils/constants';
 import KeyPress from './KeyPress';
 import BoundaryList from './BoundaryList';
 import ShootableList from './ShootableList';
-import { checkIfInsideRect } from '../utils/checkCollision';
+import {
+  checkIfInsideRect,
+  checkCollisionBtwnCircles,
+} from '../utils/checkCollision';
 import { getTranslateY } from '../utils/misc';
 
 export default class GameState {
@@ -73,6 +76,9 @@ export default class GameState {
       this.boundaries.list.forEach((el) => {
         el.y -= this.spaceship.velocity.y;
       });
+      this.spaceship.bullets.forEach((b) => {
+        b.y -= this.spaceship.velocity.y;
+      });
     }
     if (
       this.spaceship.y < this.scrollBoundary.bottom &&
@@ -134,11 +140,15 @@ export default class GameState {
 
     // handle bullets
     this.spaceship.bullets.forEach((b) => {
-      b.updatePosition();
+      if (b.status === 'dead') this.spaceship.removeBullet(b.id);
+      b.update();
+      if (b.status !== 'alive') return;
       this.shootables.list.forEach((shootable) => {
-        const collision = checkIfInsideRect(shootable, b);
+        const collision = shootable.circle
+          ? checkCollisionBtwnCircles(shootable, b)
+          : checkIfInsideRect(shootable, b);
         if (collision) {
-          this.spaceship.removeBullet(b.id);
+          b.onHit();
           shootable.onHit();
         }
       });

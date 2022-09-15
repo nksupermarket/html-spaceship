@@ -1,6 +1,6 @@
 import { XY } from '../../types/types';
 
-function sqr(x: number) {
+export function sqr(x: number) {
   return x * x;
 }
 function dist2(v: XY, w: XY) {

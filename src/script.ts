@@ -24,26 +24,30 @@ window.addEventListener('mousemove', (e) => {
   gameState.mouse.y = e.clientY;
 });
 
-function toggleKeypress(key: string, bool: boolean) {
+function toggleKeypress(key: string, keyIsPressed: boolean) {
   switch (key) {
     case 'a':
     case 'ArrowLeft': {
-      gameState.keyPress.keys.left.pressed = bool;
+      gameState.keyPress.keys.left.pressed = keyIsPressed;
+      gameState.spaceship.accelerating = keyIsPressed;
       break;
     }
     case 'd':
     case 'ArrowRight': {
-      gameState.keyPress.keys.right.pressed = bool;
+      gameState.keyPress.keys.right.pressed = keyIsPressed;
+      gameState.spaceship.accelerating = keyIsPressed;
       break;
     }
     case 'w':
     case 'ArrowUp': {
-      gameState.keyPress.keys.up.pressed = bool;
+      gameState.keyPress.keys.up.pressed = keyIsPressed;
+      gameState.spaceship.accelerating = keyIsPressed;
       break;
     }
     case 's':
     case 'ArrowDown': {
-      gameState.keyPress.keys.down.pressed = bool;
+      gameState.keyPress.keys.down.pressed = keyIsPressed;
+      gameState.spaceship.accelerating = keyIsPressed;
       break;
     }
   }
@@ -56,7 +60,7 @@ window.addEventListener('mousedown', (e) => {
     gameState.keyPress.setTimer(
       'click',
       () => (gameState.spaceship.shotAvailable = true),
-      200
+      500
     );
 });
 window.addEventListener('mouseup', (e) => {

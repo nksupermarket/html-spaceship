@@ -1,9 +1,10 @@
 import { Center } from '../../types/interfaces';
 import { Edges, XY } from '../../types/types';
 import Boundary from '../classes/Boundary';
+import Bullet from '../classes/Bullet';
 import Entity from '../classes/Entity';
 import Shootable from '../classes/Shootable';
-import { distToSegment } from './math';
+import { distToSegment, sqr } from './math';
 
 export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
   const insideY =
@@ -26,19 +27,6 @@ export function checkShipEdgeCollision(edge: XY, rect: Entity) {
 
 export function checkIfWithinBounds(edge: XY, bounds: XY) {
   return edge.x > 0 && edge.x < bounds.x && edge.y > 0 && edge.y < bounds.y;
-}
-
-export function checkCollisionBtwnCircleAndRect(
-  circle: Shootable | Boundary,
-  rectCorners: XY[],
-  rectVertices: XY[][]
-) {
-  const centerOfCircle = circle.getCenter();
-
-  return (
-    pointInRectangle(centerOfCircle, rectCorners) ||
-    intersectCircle(centerOfCircle, circle.width / 2, rectVertices)
-  );
 }
 
 function pointInRectangle(centerOfCircle: XY, rectCorners: XY[]) {
@@ -77,4 +65,29 @@ function intersectCircle(centerOfCircle: XY, r: number, rectVertices: XY[][]) {
   }
 
   return false;
+}
+
+export function checkCollisionBtwnCircleAndRect(
+  circle: Shootable | Boundary,
+  rectCorners: XY[],
+  rectVertices: XY[][]
+) {
+  const centerOfCircle = circle.getCenter();
+
+  return (
+    pointInRectangle(centerOfCircle, rectCorners) ||
+    intersectCircle(centerOfCircle, circle.width / 2, rectVertices)
+  );
+}
+
+export function checkCollisionBtwnCircles(
+  c1: Shootable | Bullet,
+  c2: Shootable | Bullet
+) {
+  // get distance between centers of circles
+  const { x: x1, y: y1 } = c1.getCenter();
+  const { x: x2, y: y2 } = c2.getCenter();
+  const distance = Math.sqrt(sqr(x2 - x1) + sqr(y2 - y1));
+
+  return distance <= c1.width / 2 + c2.width / 2;
 }

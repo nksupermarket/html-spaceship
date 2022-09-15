@@ -48,6 +48,7 @@ export default class Bullet extends Entity {
   speed: 5;
   currAction: Action;
   spriteIdx: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  status: 'alive' | 'dieing' | 'dead';
 
   constructor({ x, y }: XY, slope: XY) {
     super(x, y, 20, 20);
@@ -56,16 +57,20 @@ export default class Bullet extends Entity {
     this.id = count++;
     this.currAction = 'idle';
     this.spriteIdx = 0;
+    this.status = 'alive';
   }
 
   draw(c: CanvasRenderingContext2D) {
+    if (this.status === 'dead') return;
     c.drawImage(
       bulletSprites[this.currAction][this.spriteIdx],
       this.x - this.width / 2,
-      this.y,
+      this.y - this.height / 2,
       this.width,
       this.height
     );
+    this.resetSpriteIdx();
+    this.increaseSpriteIdx();
   }
 
   updatePosition() {
@@ -88,5 +93,30 @@ export default class Bullet extends Entity {
   updateAction(action: Action) {
     if (action !== this.currAction) this.resetSpriteIdx('override');
     this.currAction = action;
+  }
+
+  update() {
+    switch (this.status) {
+      case 'alive':
+        this.updatePosition();
+        break;
+      case 'dieing': {
+        if (this.spriteIdx === bulletSprites[this.currAction].length - 1)
+          this.status = 'dead';
+        break;
+      }
+    }
+  }
+
+  onHit() {
+    this.updateAction('poof');
+    this.status = 'dieing';
+  }
+
+  getCenter() {
+    return {
+      x: this.x + this.width / 2,
+      y: this.y + this.height / 2,
+    };
   }
 }

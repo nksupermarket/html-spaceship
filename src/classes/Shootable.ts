@@ -4,6 +4,7 @@ import { XY } from '../../types/types';
 export default class Shootable extends Entity {
   lifePoints: number = 50;
   el: HTMLElement;
+  circle: boolean;
 
   constructor(
     x: number,
@@ -14,6 +15,7 @@ export default class Shootable extends Entity {
   ) {
     super(x, y, height, width);
     this.el = el;
+    this.circle = window.getComputedStyle(el).borderRadius === '50%';
   }
 
   removeEl() {
