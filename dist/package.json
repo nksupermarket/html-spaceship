@@ -1,0 +1,15 @@
+{
+  "name": "html-spaceship",
+  "version": "1.0.3",
+  "main": "main.ts",
+  "description": "",
+  "types": "src/main.d.ts",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {},
+  "dependencies": {
+    "react": "^18.2.0"
+  }
+}

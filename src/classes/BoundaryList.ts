@@ -4,9 +4,10 @@ export default class BoundaryList {
   list: Boundary[];
 
   constructor() {
-    this.list = Array.from(document.querySelectorAll('.boundary')).map(
-      (el) => new Boundary(el as HTMLElement)
-    );
+    const tmp = Array.from(
+      document.querySelectorAll('.boundary')
+    ) as HTMLElement[];
+    this.list = tmp.map((el: HTMLElement) => new Boundary(el));
   }
 
   removeEmptyBoundaries() {

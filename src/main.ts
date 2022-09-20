@@ -1,5 +1,6 @@
 import Canvas from './classes/Canvas';
 import GameState from './classes/GameState';
+import '../dist/style.css';
 
 document.documentElement.style.overflow = 'hidden';
 
@@ -29,25 +30,25 @@ function toggleKeypress(key: string, keyIsPressed: boolean) {
     case 'a':
     case 'ArrowLeft': {
       gameState.keyPress.keys.left.pressed = keyIsPressed;
-      gameState.spaceship.accelerating = keyIsPressed;
+      gameState.spaceship.accelerating = true;
       break;
     }
     case 'd':
     case 'ArrowRight': {
       gameState.keyPress.keys.right.pressed = keyIsPressed;
-      gameState.spaceship.accelerating = keyIsPressed;
+      gameState.spaceship.accelerating = true;
       break;
     }
     case 'w':
     case 'ArrowUp': {
       gameState.keyPress.keys.up.pressed = keyIsPressed;
-      gameState.spaceship.accelerating = keyIsPressed;
+      gameState.spaceship.accelerating = true;
       break;
     }
     case 's':
     case 'ArrowDown': {
       gameState.keyPress.keys.down.pressed = keyIsPressed;
-      gameState.spaceship.accelerating = keyIsPressed;
+      gameState.spaceship.accelerating = true;
       break;
     }
   }

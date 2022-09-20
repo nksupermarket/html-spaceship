@@ -200,8 +200,6 @@ export default class Spaceship extends Entity {
       // want to show flames as ship is decelerating but not after
     ) {
       this.drawFlames(c);
-
-      console.log(this.decelerationTime);
     }
   }
 

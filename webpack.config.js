@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
   mode: 'development',
-  entry: './src/script.ts',
+  entry: { main: './src/main.ts', wrapWords: './src/utils/wrapWords.tsx' },
   devtool: 'inline-source-map',
   devServer: {
     static: './dist',
@@ -11,7 +11,7 @@ module.exports = {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        use: ['ts-loader'],
         exclude: /node_modules/,
       },
       {
@@ -21,13 +21,20 @@ module.exports = {
           name: 'images/[name].[ext]',
         },
       },
+      {
+        test: /\.css$/i,
+        use: ['css-loader'],
+      },
     ],
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
-    filename: 'main.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
+    library: 'html_spaceship',
+    libraryTarget: 'umd',
+    globalObject: 'this',
   },
 };
