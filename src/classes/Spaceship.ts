@@ -217,9 +217,23 @@ export default class Spaceship extends Entity {
         Math.abs(this.velocity.y / this.speed)
       ) * 40;
 
+    c.fillStyle = '#F18805';
     drawRoundRect(
       c,
       this.x + 27,
+      this.y - 5 - length / 1.5,
+      3,
+      length / 1.5,
+      {
+        upperLeft: 2,
+        upperRight: 2,
+      },
+      true,
+      true
+    );
+    drawRoundRect(
+      c,
+      this.x + 19,
       this.y - 5 - length / 1.5,
       3,
       length / 1.5,
@@ -236,19 +250,6 @@ export default class Spaceship extends Entity {
       this.y - 5 - length,
       3,
       length,
-      {
-        upperLeft: 2,
-        upperRight: 2,
-      },
-      true,
-      true
-    );
-    drawRoundRect(
-      c,
-      this.x + 19,
-      this.y - 5 - length / 1.5,
-      3,
-      length / 1.5,
       {
         upperLeft: 2,
         upperRight: 2,
@@ -292,7 +293,7 @@ export default class Spaceship extends Entity {
     if (this.decelerationTime > 1) {
       return;
     }
-    let key: keyof typeof this.velocity;
+    let key: keyof XY;
     for (key in this.velocity) {
       this.velocity[key] -=
         easeInCirc(this.decelerationTime) * this.velocity[key];
@@ -300,7 +301,7 @@ export default class Spaceship extends Entity {
   }
 
   applyInertia() {
-    let key: keyof typeof this.velocity;
+    let key: keyof XY;
     for (key in this.velocity) {
       this.velocity[key] /= 3;
     }
