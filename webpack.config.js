@@ -2,9 +2,12 @@ const path = require('path');
 
 module.exports = {
   mode: 'development',
-  entry: { main: './src/main.ts', wrapWords: './src/utils/wrapWords.tsx' },
+  entry: { main: './src/main.ts', wrapWords: './src/wrapWords.ts' },
   devtool: 'inline-source-map',
   devServer: {
+    port: 8080,
+    hot: false,
+    liveReload: true,
     static: './dist',
   },
   module: {

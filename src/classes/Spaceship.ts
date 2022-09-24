@@ -10,6 +10,7 @@ import Bullet from './Bullet';
 import Entity from './Entity';
 import spaceshipPic from '../assets/rocket-lightmode.png';
 import { createImage } from '../utils/misc';
+import { SS_DIM } from '../utils/constants';
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
@@ -81,7 +82,7 @@ export default class Spaceship extends Entity {
   speed: number;
 
   constructor({ x, y }: XY) {
-    super(x, y, 100, 50);
+    super(x, y, SS_DIM.height, SS_DIM.width);
     this.speed = 10;
     this.angle = (90 * Math.PI) / 2;
     this.shotAvailable = true;
@@ -147,6 +148,7 @@ export default class Spaceship extends Entity {
       }
 
       if (collision) {
+        console.log(boundary.el.textContent);
         this.velocity.x = -this.velocity.x;
         this.velocity.y = -this.velocity.y;
       }

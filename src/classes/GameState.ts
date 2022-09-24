@@ -9,6 +9,7 @@ import {
   checkCollisionBtwnCircles,
 } from '../utils/checkCollision';
 import { getTranslateY } from '../utils/misc';
+import getStartPos from '../utils/getStartPos';
 
 export default class GameState {
   spaceship: Spaceship;
@@ -19,20 +20,16 @@ export default class GameState {
   scrollBoundary: { top: number; bottom: number };
   scrollSpeed: number;
 
-  constructor(
-    startPos = {
-      y: window.innerHeight / 2,
-      x: window.innerWidth / 2,
-    }
-  ) {
-    this.spaceship = new Spaceship(startPos);
-
+  constructor(startPos?: XY) {
     this.scrollSpeed = 0;
     this.scrollBoundary = {
       top: window.innerHeight * 0.3,
       bottom: window.innerHeight * 0.7,
     };
     this.boundaries = new BoundaryList();
+    this.spaceship = new Spaceship(
+      startPos || getStartPos(this.boundaries.list)
+    );
     this.shootables = new ShootableList();
     this.keyPress = new KeyPress();
     this.mouse = {

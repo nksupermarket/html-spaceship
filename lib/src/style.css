@@ -20,7 +20,7 @@ canvas {
 }
 
 .removed {
-  display: none;
+  opacity: 0;
 }
 
 .shake {
