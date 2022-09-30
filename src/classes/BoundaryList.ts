@@ -12,7 +12,6 @@ export default class BoundaryList {
 
   removeEmptyBoundaries() {
     this.list = this.list.filter((b) => {
-      if (b.el.classList.contains('removed')) console.log('removed');
       return b.height && !b.el.classList.contains('removed');
     });
   }

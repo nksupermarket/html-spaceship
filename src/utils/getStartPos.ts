@@ -7,7 +7,10 @@ export default function getStartPos(boundaries: Boundary[]) {
   function getRdmPos() {
     return {
       x: Math.floor(Math.random() * (window.innerWidth - SS_DIM.width)),
-      y: Math.floor(Math.random() * (window.innerHeight - SS_DIM.height)),
+      y: Math.floor(
+        Math.random() * (window.innerHeight * 0.4 - SS_DIM.height) +
+          window.innerHeight * 0.3
+      ),
     };
   }
 

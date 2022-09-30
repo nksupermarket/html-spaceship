@@ -64,17 +64,18 @@ export default class GameState {
     );
 
     // handle scroll
-    function shift(this: GameState, translateVal: number) {
+    function shift(this: GameState, translateVal: number, change: number) {
+      console.log(change);
       document.body.style.transform = `translateY(${translateVal}px)`;
       this.shootables.list.forEach((el) => {
-        el.y -= this.spaceship.velocity.y;
+        el.y -= change;
       });
 
       this.boundaries.list.forEach((el) => {
-        el.y -= this.spaceship.velocity.y;
+        el.y -= change;
       });
       this.spaceship.bullets.forEach((b) => {
-        b.y -= this.spaceship.velocity.y;
+        b.y -= change;
       });
     }
     if (
@@ -83,12 +84,20 @@ export default class GameState {
     ) {
       const translateVal =
         getTranslateY(document.body) - this.spaceship.velocity.y;
-
+      // console.log(translateVal);
       if (
         Math.abs(translateVal) <
         document.documentElement.scrollHeight - window.innerHeight
       ) {
-        shift.call(this, translateVal);
+        shift.call(this, translateVal, this.spaceship.velocity.y);
+      } else {
+        shift.call(
+          this,
+          -(document.documentElement.scrollHeight - window.innerHeight),
+          document.documentElement.scrollHeight -
+            window.innerHeight -
+            Math.abs(getTranslateY(document.body))
+        );
       }
     }
 
@@ -99,10 +108,11 @@ export default class GameState {
       const translateVal =
         getTranslateY(document.body) - this.spaceship.velocity.y;
       if (translateVal < 0) {
-        shift.call(this, translateVal);
+        shift.call(this, translateVal, this.spaceship.velocity.y);
+      } else {
+        shift.call(this, 0, Math.abs(getTranslateY(document.body)));
       }
     }
-
     const translateVal = Math.floor(Math.abs(getTranslateY(document.body)));
     if (
       // spaceship is in between scrollBoundaries
@@ -112,13 +122,13 @@ export default class GameState {
       this.spaceship.updateYPosition();
     } else if (
       // when we are on top of the page, we want to be able to go beyond scrollBoundary.top
-      translateVal < 30 &&
+      translateVal === 0 &&
       this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.bottom
     ) {
       this.spaceship.updateYPosition();
     } else if (
       // when we are on bottom of page, we want to be able to go beyond scrollBoundary.bottom
-      translateVal + 30 >
+      translateVal ===
         document.documentElement.scrollHeight - window.innerHeight &&
       this.spaceship.y + this.spaceship.velocity.y > this.scrollBoundary.top
     ) {

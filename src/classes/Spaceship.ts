@@ -148,7 +148,6 @@ export default class Spaceship extends Entity {
       }
 
       if (collision) {
-        console.log(boundary.el.textContent);
         this.velocity.x = -this.velocity.x;
         this.velocity.y = -this.velocity.y;
       }
