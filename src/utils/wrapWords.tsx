@@ -11,7 +11,7 @@ export default function wrapWords(
   }
 ) {
   return str.split(' ').map((w: string, i, arr) => {
-    const rootClass = ['shootable-el'];
+    const rootClass = ['shootable_el'];
 
     if (last && i === arr.length - 1) rootClass.push('last');
     if (boundary) rootClass.push('boundary');

@@ -65,7 +65,6 @@ export default class GameState {
 
     // handle scroll
     function shift(this: GameState, translateVal: number, change: number) {
-      console.log(change);
       document.body.style.transform = `translateY(${translateVal}px)`;
       this.shootables.list.forEach((el) => {
         el.y -= change;
@@ -84,7 +83,6 @@ export default class GameState {
     ) {
       const translateVal =
         getTranslateY(document.body) - this.spaceship.velocity.y;
-      // console.log(translateVal);
       if (
         Math.abs(translateVal) <
         document.documentElement.scrollHeight - window.innerHeight
@@ -162,7 +160,10 @@ export default class GameState {
     });
 
     this.shootables.removeDeadEls();
+    this.shootables.updatePositions();
+
     this.boundaries.updateSizes();
     this.boundaries.removeEmptyBoundaries();
+    this.boundaries.updatePositions();
   }
 }

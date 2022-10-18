@@ -8,5 +8,6 @@ export default class Shootable extends Entity {
     removeEl(): void;
     onHit(): void;
     shake(): void;
+    updatePos(): void;
     getCenter(): XY;
 }

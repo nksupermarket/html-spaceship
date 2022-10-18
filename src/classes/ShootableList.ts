@@ -16,6 +16,10 @@ export default class ShootableList {
     });
   }
 
+  updatePositions() {
+    this.list.forEach((se) => se.updatePos());
+  }
+
   removeDeadEls() {
     this.list = this.list.filter((se) => {
       if (se.lifePoints <= 0) {

@@ -5,5 +5,6 @@ export default class Boundary extends Entity {
     circle: boolean;
     constructor(el: HTMLElement);
     recalculateSize(): void;
+    updatePos(): void;
     getCenter(): XY;
 }

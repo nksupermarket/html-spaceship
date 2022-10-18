@@ -16,6 +16,10 @@ export default class BoundaryList {
     });
   }
 
+  updatePositions() {
+    this.list.forEach((b) => b.updatePos());
+  }
+
   updateSizes() {
     this.list.forEach((b) => b.recalculateSize());
   }
