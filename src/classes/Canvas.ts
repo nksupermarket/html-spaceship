@@ -1,11 +1,4 @@
-import { Direction, Mouse } from '../../types/types';
-import { DIRECTIONS } from '../utils/constants';
-import Shootables from './ShootableList';
-import Boundary from './Boundary';
-import Spaceship, { spaceshipImg } from './Spaceship';
-import { checkIfInsideRect } from '../utils/checkCollision';
-import KeyPress from './KeyPress';
-import BoundaryList from './BoundaryList';
+import Spaceship from './Spaceship';
 
 export default class Canvas {
   el: HTMLCanvasElement;
@@ -29,5 +22,9 @@ export default class Canvas {
 
     spaceship.bullets.forEach((b) => b.draw(c));
     spaceship.draw(c);
+  }
+
+  remove() {
+    this.el.remove();
   }
 }

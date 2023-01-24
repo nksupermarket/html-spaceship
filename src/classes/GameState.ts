@@ -23,6 +23,7 @@ export default class GameState {
   constructor(startPos?: XY) {
     this.scrollSpeed = 0;
     this.scrollBoundary = {
+      // local minima/maxima that triggers a scroll upon contact
       top: window.innerHeight * 0.3,
       bottom: window.innerHeight * 0.7,
     };

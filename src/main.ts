@@ -2,78 +2,138 @@ import Canvas from './classes/Canvas';
 import GameState from './classes/GameState';
 import './style.css';
 
-document.documentElement.style.overflow = 'hidden';
-
-const canvas = new Canvas();
-const gameState = new GameState();
+interface ActiveState {
+  canvas: Canvas;
+  gameState: GameState;
+  active: true;
+}
+interface DeactiveState {
+  canvas: null;
+  gameState: null;
+  active: false;
+}
+const state: DeactiveState | ActiveState = {
+  canvas: null,
+  gameState: null,
+  active: false,
+};
 
 function animate() {
-  gameState.update();
-  canvas.draw(gameState.spaceship);
+  if (!state.active) return;
+  state.gameState.update();
+  state.canvas.draw(state.gameState.spaceship);
   requestAnimationFrame(animate);
 }
 
-animate();
-
-window.addEventListener('resize', () => {
-  gameState.shootables.list = gameState.shootables.getList();
-  canvas.setCorrectSize();
-});
-
-window.addEventListener('mousemove', (e) => {
-  gameState.mouse.x = e.clientX;
-  gameState.mouse.y = e.clientY;
-});
-
 function toggleKeypress(key: string, keyIsPressed: boolean) {
+  if (!state.active) return;
+
   switch (key) {
     case 'a':
     case 'ArrowLeft': {
-      gameState.keyPress.keys.left.pressed = keyIsPressed;
-      gameState.spaceship.accelerating = keyIsPressed;
+      state.gameState.keyPress.keys.left.pressed = keyIsPressed;
+      state.gameState.spaceship.accelerating = keyIsPressed;
       break;
     }
     case 'd':
     case 'ArrowRight': {
-      gameState.keyPress.keys.right.pressed = keyIsPressed;
-      gameState.spaceship.accelerating = keyIsPressed;
+      state.gameState.keyPress.keys.right.pressed = keyIsPressed;
+      state.gameState.spaceship.accelerating = keyIsPressed;
       break;
     }
     case 'w':
     case 'ArrowUp': {
-      gameState.keyPress.keys.up.pressed = keyIsPressed;
-      gameState.spaceship.accelerating = keyIsPressed;
+      state.gameState.keyPress.keys.up.pressed = keyIsPressed;
+      state.gameState.spaceship.accelerating = keyIsPressed;
       break;
     }
     case 's':
     case 'ArrowDown': {
-      gameState.keyPress.keys.down.pressed = keyIsPressed;
-      gameState.spaceship.accelerating = keyIsPressed;
+      state.gameState.keyPress.keys.down.pressed = keyIsPressed;
+      state.gameState.spaceship.accelerating = keyIsPressed;
       break;
     }
   }
 }
 
-window.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  gameState.keyPress.keys.click.pressed = true;
-  if (!gameState.keyPress.keys.click.timer)
-    gameState.keyPress.setTimer(
-      'click',
-      () => (gameState.spaceship.shotAvailable = true),
-      500
-    );
-});
-window.addEventListener('mouseup', (e) => {
-  e.preventDefault();
-  gameState.spaceship.shotAvailable = true;
-  gameState.keyPress.keys.click.pressed = false;
-  if (gameState.keyPress.keys.click.timer) gameState.keyPress.removeTimer();
-});
+function getEventHandlers() {
+  if (!state.active) return;
+  return {
+    resizeCanvas: () => {
+      state.gameState.shootables.list = state.gameState.shootables.getList();
+      state.canvas.setCorrectSize();
+    },
 
-window.addEventListener('keydown', (e) => {
-  toggleKeypress(e.key, true);
-});
-window.addEventListener('keyup', (e) => {
-  toggleKeypress(e.key, false);
-});
+    changeAimPos: (e: MouseEvent) => {
+      state.gameState.mouse.x = e.clientX;
+      state.gameState.mouse.y = e.clientY;
+    },
+
+    shoot: (e: MouseEvent) => {
+      e.preventDefault();
+      state.gameState.keyPress.keys.click.pressed = true;
+      if (!state.gameState.keyPress.keys.click.timer)
+        state.gameState.keyPress.setTimer(
+          'click',
+          () => (state.gameState.spaceship.shotAvailable = true),
+          500
+        );
+    },
+
+    resetShoot: (e: MouseEvent) => {
+      e.preventDefault();
+      state.gameState.spaceship.shotAvailable = true;
+      state.gameState.keyPress.keys.click.pressed = false;
+      if (state.gameState.keyPress.keys.click.timer)
+        state.gameState.keyPress.removeTimer();
+    },
+
+    handleKeyPress: (e: KeyboardEvent) => {
+      toggleKeypress(e.key, true);
+    },
+
+    handleKeyUp: (e: KeyboardEvent) => {
+      toggleKeypress(e.key, false);
+    },
+  };
+}
+
+export default function run() {
+  document.documentElement.style.overflow = 'hidden';
+
+  state.active = true;
+  state.canvas = new Canvas();
+  state.gameState = new GameState();
+  const eventHandlers = getEventHandlers()!;
+
+  window.addEventListener('resize', eventHandlers.resizeCanvas);
+
+  window.addEventListener('mousemove', eventHandlers.changeAimPos);
+  window.addEventListener('mousedown', eventHandlers.shoot);
+  window.addEventListener('mouseup', eventHandlers.resetShoot);
+
+  window.addEventListener('keydown', eventHandlers.handleKeyPress);
+  window.addEventListener('keyup', eventHandlers.handleKeyUp);
+
+  animate();
+
+  window.addEventListener('keydown', function deactivate(e) {
+    if (e.key != ' ') return;
+
+    state.canvas?.remove();
+    state.active = false;
+    state.canvas = null;
+    state.gameState = null;
+
+    window.removeEventListener('resize', eventHandlers.resizeCanvas);
+    window.removeEventListener('mousemove', eventHandlers.changeAimPos);
+    window.removeEventListener('mousedown', eventHandlers.shoot);
+    window.removeEventListener('mouseup', eventHandlers.resetShoot);
+    window.removeEventListener('keydown', eventHandlers.handleKeyPress);
+    window.removeEventListener('keyup', eventHandlers.handleKeyUp);
+
+    window.removeEventListener('keydown', deactivate);
+
+    document.documentElement.style.overflow = 'scroll';
+  });
+}
