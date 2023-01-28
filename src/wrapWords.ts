@@ -4,7 +4,7 @@ document.querySelectorAll('.abc').forEach((b) => {
     .filter((w) => w !== '')
     .map(
       (w) =>
-        `<span class="shootable_el boundary" style="display:inline-block;">${w} </span>`
+        `<span class="shootable_el" style="display:inline-block;">${w} </span>`
     )
     .join('') as string;
 });

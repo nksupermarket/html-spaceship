@@ -49,6 +49,7 @@ export default class Bullet extends Entity {
   currAction: Action;
   spriteIdx: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   status: 'alive' | 'dieing' | 'dead';
+  velocity: XY;
 
   constructor({ x, y }: XY, slope: XY) {
     super(x, y, 20, 20);

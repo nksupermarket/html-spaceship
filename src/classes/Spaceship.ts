@@ -4,6 +4,8 @@ import {
   checkCollisionBtwnCircleAndRect,
   checkIfWithinBounds,
   checkShipEdgeCollision,
+  getCollisionAxisForBounds,
+  getShipEdgeCollisionAxis,
 } from '../utils/checkCollision';
 import Boundary from './Boundary';
 import Bullet from './Bullet';
@@ -80,6 +82,7 @@ export default class Spaceship extends Entity {
   acceleration: number;
   accelerating: boolean;
   speed: number;
+  velocity: XY;
 
   constructor({ x, y }: XY) {
     super(x, y, SS_DIM.height, SS_DIM.width);
@@ -90,6 +93,7 @@ export default class Spaceship extends Entity {
     this.acceleration = 0.05;
     this.accelerating = false;
     this.bullets = [];
+    this.velocity = { x: 0, y: 0 };
   }
 
   move(dir: Direction) {
@@ -123,16 +127,21 @@ export default class Spaceship extends Entity {
 
     // handle browser edges
     for (let i = 0; i < edges.length; i++) {
-      if (!checkIfWithinBounds(edges[i], bounds)) {
-        this.velocity.x = -this.velocity.x;
-        this.velocity.y = -this.velocity.y;
-        return;
+      const collisionAxis = getCollisionAxisForBounds(edges[i], bounds);
+      if (!collisionAxis) continue;
+      switch (collisionAxis) {
+        case 'x':
+          this.velocity.y = -this.velocity.y;
+          return;
+        case 'y':
+          this.velocity.x = -this.velocity.x;
+          return;
       }
     }
 
     // handle element boundaries
     boundaries.forEach((boundary) => {
-      let collision;
+      let collision = null;
 
       if (boundary.circle) {
         collision = checkCollisionBtwnCircleAndRect(
@@ -142,14 +151,19 @@ export default class Spaceship extends Entity {
         );
       } else {
         for (let i = 0; i < edges.length; i++) {
-          collision = checkShipEdgeCollision(edges[i], boundary);
+          collision = getShipEdgeCollisionAxis(edges[i], boundary);
           if (collision) break;
         }
       }
-
-      if (collision) {
-        this.velocity.x = -this.velocity.x;
-        this.velocity.y = -this.velocity.y;
+      switch (collision) {
+        case 'x':
+          this.velocity.y = -this.velocity.y;
+          return;
+        case 'y':
+          this.velocity.x = -this.velocity.x;
+          return;
+        default:
+          return;
       }
     });
   }

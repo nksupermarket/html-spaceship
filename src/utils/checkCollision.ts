@@ -18,6 +18,25 @@ export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
   return insideX && insideY;
 }
 
+export function getShipEdgeCollisionAxis(edge: XY, rect: Entity) {
+  const collideY = rect.y <= edge.y && rect.y + rect.height > edge.y;
+  const collideX = rect.x <= edge.x && rect.x + rect.width > edge.x;
+
+  if (collideY && collideX) {
+    const sizeOfYPenetration = Math.min(
+      edge.y - rect.y,
+      rect.y + rect.height - edge.y
+    );
+    const sizeOfXPenetration = Math.min(
+      edge.x - rect.x,
+      rect.x + rect.width - edge.x
+    );
+    return sizeOfYPenetration > sizeOfXPenetration ? 'y' : 'x';
+  }
+
+  return null;
+}
+
 export function checkShipEdgeCollision(edge: XY, rect: Entity) {
   const collideY = rect.y <= edge.y && rect.y + rect.height > edge.y;
   const collideX = rect.x <= edge.x && rect.x + rect.width > edge.x;
