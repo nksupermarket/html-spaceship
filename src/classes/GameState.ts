@@ -93,7 +93,7 @@ export default class GameState {
       this.spaceship.updateYPosition();
     } else if (
       // when we are on top of the page, we want to be able to go beyond scrollBoundary.top
-      distanceTraveled === 0 &&
+      distanceTraveled === window.scrollY &&
       this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.bottom
     ) {
       this.spaceship.updateYPosition();
@@ -130,12 +130,15 @@ export default class GameState {
       this.spaceship.y > this.scrollBoundary.top &&
       this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.top
     ) {
-      const translateVal =
-        getTranslateY(document.body) - this.spaceship.velocity.y;
-      if (translateVal < 0) {
-        shift.call(this, translateVal, this.spaceship.velocity.y);
+      const newTranslateVal = translateVal - this.spaceship.velocity.y;
+      if (newTranslateVal < window.scrollY) {
+        shift.call(this, newTranslateVal, this.spaceship.velocity.y);
       } else {
-        shift.call(this, 0, Math.abs(getTranslateY(document.body)));
+        shift.call(
+          this,
+          window.scrollY,
+          Math.abs(getTranslateY(document.body))
+        );
       }
     }
 

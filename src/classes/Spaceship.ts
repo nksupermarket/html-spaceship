@@ -162,6 +162,11 @@ export default class Spaceship extends Entity {
         case 'y':
           this.velocity.x = -this.velocity.x;
           return;
+        case true: {
+          this.velocity.x = -this.velocity.x;
+          this.velocity.y = -this.velocity.y;
+          return;
+        }
         default:
           return;
       }
