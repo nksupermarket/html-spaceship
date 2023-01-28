@@ -97,13 +97,15 @@ function getEventHandlers() {
     },
   };
 }
-
+window.addEventListener('dblclick', run);
 export default function run() {
+  if (state.active) return;
   document.documentElement.style.overflow = 'hidden';
 
-  state.active = true;
-  state.canvas = new Canvas();
-  state.gameState = new GameState();
+  const proxy = state as unknown as ActiveState;
+  proxy.active = true;
+  proxy.canvas = new Canvas();
+  proxy.gameState = new GameState();
   const eventHandlers = getEventHandlers()!;
 
   window.addEventListener('resize', eventHandlers.resizeCanvas);
@@ -120,7 +122,7 @@ export default function run() {
   window.addEventListener('keydown', function deactivate(e) {
     if (e.key != ' ') return;
 
-    state.canvas?.remove();
+    proxy.canvas?.remove();
     state.active = false;
     state.canvas = null;
     state.gameState = null;

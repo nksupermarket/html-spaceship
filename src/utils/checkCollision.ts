@@ -25,6 +25,12 @@ export function checkShipEdgeCollision(edge: XY, rect: Entity) {
   return collideY && collideX;
 }
 
+export function getCollisionAxisForBounds(edge: XY, bounds: XY) {
+  if (edge.x < 0 || edge.x > bounds.x) return 'y';
+  else if (edge.y < 0 || edge.y > bounds.y) return 'x';
+  else return null;
+}
+
 export function checkIfWithinBounds(edge: XY, bounds: XY) {
   return edge.x > 0 && edge.x < bounds.x && edge.y > 0 && edge.y < bounds.y;
 }
