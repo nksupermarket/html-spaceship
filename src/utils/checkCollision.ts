@@ -101,7 +101,7 @@ function intersectCircle(centerOfCircle: XY, r: number, rectVertices: XY[][]) {
   return false;
 }
 
-export function getCollisionPointBetweenRectAndCircle(
+export function getCollisionBetweenRectAndCircle(
   centerOfCircle: XY,
   r: number,
   rectVertices: XY[]
@@ -127,7 +127,13 @@ export function getCollisionPointBetweenRectAndCircle(
     x: centerOfCircle.x + xDiff,
     y: centerOfCircle.y + yDiff,
   };
-  return pointOfCollision;
+  return {
+    pointOfCollision,
+    correction: {
+      x: pointOfCollision.x - closestVertex.x,
+      y: pointOfCollision.y - closestVertex.y,
+    },
+  };
 }
 
 export function checkCollisionBtwnCircleAndRect(

@@ -1,22 +1,18 @@
 import { Center, MouseInterface, XY } from '../../types/interfaces';
 import { Direction } from '../../types/types';
+import spaceshipPic from '../assets/rocket-lightmode.png';
 import {
-  checkCollisionBtwnCircleAndRect,
   checkIfWithinBounds,
-  checkShipCollision,
-  getCollisionAxisForBounds,
-  getCollisionPointBetweenRectAndCircle,
+  getCollisionBetweenRectAndCircle,
   getShipCollision,
 } from '../utils/checkCollision';
-import Boundary, { CircleBoundary, RectBoundary } from './boundaries';
+import { SS_DIMENSIONS } from '../utils/constants';
+import { getSlopeOfTangent } from '../utils/math';
+import { createImage, getExtremities } from '../utils/misc';
+import { CircleBoundary, RectBoundary } from './boundaries';
 import Bullet from './Bullet';
 import Entity from './Entity';
-import spaceshipPic from '../assets/rocket-lightmode.png';
-import { createImage, getExtremities } from '../utils/misc';
-import { SS_DIMENSIONS } from '../utils/constants';
 import Line from './Line';
-import Vector from './Vector';
-import { getSlopeOfTangent } from '../utils/math';
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
@@ -165,69 +161,22 @@ export default class Spaceship extends Entity {
     }
   }
 
-  getFarthestPoint(vector: XY) {
-    const vertices = this.getVertices();
-    let farthestPoint = vertices[0];
-    let dotProduct = farthestPoint.x * vector.x + farthestPoint.y * vector.y;
-
-    for (let i = 1; i < vertices.length; i++) {
-      const testDotProduct =
-        vertices[i].x * vector.x + vertices[i].y * vector.y;
-      if (testDotProduct > dotProduct) {
-        dotProduct = testDotProduct;
-        farthestPoint = vertices[i];
-      }
-    }
-    return farthestPoint;
-  }
-
-  handleCollisionWithLine(line: Line) {
-    const vectorOfLine = Vector.fromPoints(line.point1, line.point2);
-
-    const normal = Vector.fromVector(vectorOfLine);
-    if (this.velocity.y > 0) normal.toRightNormal();
-    else if (this.velocity.y < 0) normal.toLeftNormal();
-
-    const farthestPoint = this.getFarthestPoint(normal);
-    // this vector is used to see which side the farthestPoint lies relative to vectorOfLine
-    const testVector = Vector.fromPoints(farthestPoint, line.point1);
-    if (testVector.getCrossProduct(vectorOfLine) > 0) {
-      //testVector is to the right of line
-
-      // This equation to find the factor will help us find the amount of penetration.
-      const factor =
-        (-vectorOfLine.x * testVector.x - vectorOfLine.y * testVector.y) /
-        (vectorOfLine.x * vectorOfLine.x + vectorOfLine.y * vectorOfLine.y);
-      const amountOfPenetration = {
-        x: testVector.x + factor * vectorOfLine.x,
-        y: testVector.y + factor * vectorOfLine.y,
-      };
-
-      this.updateXPosition(-amountOfPenetration.x);
-      this.updateYPosition(-amountOfPenetration.y);
-
-      this.velocity.y = -this.velocity.y;
-    }
-  }
-
   handleCollisionWithCircle(boundary: CircleBoundary) {
-    const collisionPoint = getCollisionPointBetweenRectAndCircle(
+    const collision = getCollisionBetweenRectAndCircle(
       boundary.getCenter(),
       boundary.radius,
       this.getVertices()
     );
-    if (!collisionPoint) return;
-    const slope: XY = getSlopeOfTangent(collisionPoint, boundary.getCenter());
+    if (!collision) return;
+    const { pointOfCollision, correction } = collision;
+    const slope: XY = getSlopeOfTangent(pointOfCollision, boundary.getCenter());
     this.collisionLine = new Line(
-      { x: collisionPoint.x + slope.x, y: collisionPoint.y + slope.y },
-      { x: collisionPoint.x - slope.x, y: collisionPoint.y - slope.y }
+      { x: pointOfCollision.x + slope.x, y: pointOfCollision.y + slope.y },
+      { x: pointOfCollision.x - slope.x, y: pointOfCollision.y - slope.y }
     );
-    this.handleCollisionWithLine(
-      new Line(
-        { x: collisionPoint.x + slope.x, y: collisionPoint.y + slope.y },
-        { x: collisionPoint.x - slope.x, y: collisionPoint.y - slope.y }
-      )
-    );
+
+    this.updateXPosition(correction.x);
+    this.updateYPosition(correction.y);
   }
 
   handleBoundaryCollision(boundaries: (CircleBoundary | RectBoundary)[]) {

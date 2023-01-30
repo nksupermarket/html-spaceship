@@ -1,4 +1,5 @@
 import { XY } from '../../types/interfaces';
+import { sqr } from '../utils/math';
 
 export default class Vector {
   x: number;
@@ -25,6 +26,7 @@ export default class Vector {
 
     this.x = this.y;
     this.y = -x;
+    return this;
   }
 
   toRightNormal() {
@@ -32,5 +34,22 @@ export default class Vector {
 
     this.x = -this.y;
     this.y = x;
+    return this;
+  }
+
+  getMagnitude() {
+    return Math.sqrt(sqr(this.x) + sqr(this.y));
+  }
+
+  normalize() {
+    this.x = this.x / this.getMagnitude();
+    this.y = this.y / this.getMagnitude();
+    return this;
+  }
+
+  multiply(scalar: number) {
+    this.x *= scalar;
+    this.y *= scalar;
+    return this;
   }
 }
