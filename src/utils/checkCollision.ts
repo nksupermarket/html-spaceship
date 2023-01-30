@@ -1,9 +1,9 @@
 import { XY } from '../../types/interfaces';
-import { CircleBoundary } from '../classes/Boundary';
+import { CircleBoundary } from '../classes/boundaries';
 import Bullet from '../classes/Bullet';
 import Entity from '../classes/Entity';
 import Shootable from '../classes/Shootable';
-import { distToSegment, sqr } from './math';
+import { distBtwnTwoPoints, distToSegment, sqr } from './math';
 
 export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
   const insideY =
@@ -101,22 +101,33 @@ function intersectCircle(centerOfCircle: XY, r: number, rectVertices: XY[][]) {
   return false;
 }
 
-function getCollisionPointBetweenRectAndCircle(
+export function getCollisionPointBetweenRectAndCircle(
   centerOfCircle: XY,
   r: number,
-  rectVertices: XY[][]
+  rectVertices: XY[]
 ) {
-  for (const v of rectVertices) {
-    const [p1, p2] = v;
-
-    if (
-      // distance between centerOfCenter and line is less than radius
-      distToSegment(centerOfCircle, p1, p2) < r
-    )
-      return v;
+  let closestVertex = rectVertices[0];
+  let shortestDist = distBtwnTwoPoints(closestVertex, centerOfCircle);
+  for (let i = 1; i < rectVertices.length; i++) {
+    const testDist = distBtwnTwoPoints(rectVertices[i], centerOfCircle);
+    if (testDist < shortestDist) {
+      closestVertex = rectVertices[i];
+      shortestDist = testDist;
+    }
   }
+  if (shortestDist > r) return null;
+  const theta = Math.atan2(
+    closestVertex.y - centerOfCircle.y,
+    closestVertex.x - centerOfCircle.x
+  );
+  const xDiff = r * Math.cos(theta);
+  const yDiff = r * Math.sin(theta);
 
-  return null;
+  const pointOfCollision = {
+    x: centerOfCircle.x + xDiff,
+    y: centerOfCircle.y + yDiff,
+  };
+  return pointOfCollision;
 }
 
 export function checkCollisionBtwnCircleAndRect(

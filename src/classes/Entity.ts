@@ -1,5 +1,3 @@
-import { XY } from '../../types/types';
-
 export default class Entity {
   height: number;
   width: number;

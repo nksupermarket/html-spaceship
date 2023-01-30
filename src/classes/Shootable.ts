@@ -1,5 +1,5 @@
+import { XY } from '../../types/interfaces';
 import Entity from './Entity';
-import { XY } from '../../types/types';
 
 export default class Shootable extends Entity {
   lifePoints: number = 50;

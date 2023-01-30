@@ -1,4 +1,4 @@
-import Boundary from '../classes/Boundary';
+import Boundary from '../classes/boundaries';
 import Spaceship from '../classes/Spaceship';
 import { checkIfInsideRect } from './checkCollision';
 import { SS_DIMENSIONS } from './constants';

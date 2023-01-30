@@ -5,9 +5,10 @@ import {
   checkIfWithinBounds,
   checkShipCollision,
   getCollisionAxisForBounds,
+  getCollisionPointBetweenRectAndCircle,
   getShipCollision,
 } from '../utils/checkCollision';
-import Boundary, { CircleBoundary, RectBoundary } from './Boundary';
+import Boundary, { CircleBoundary, RectBoundary } from './boundaries';
 import Bullet from './Bullet';
 import Entity from './Entity';
 import spaceshipPic from '../assets/rocket-lightmode.png';
@@ -15,6 +16,7 @@ import { createImage, getExtremities } from '../utils/misc';
 import { SS_DIMENSIONS } from '../utils/constants';
 import Line from './Line';
 import Vector from './Vector';
+import { getSlopeOfTangent } from '../utils/math';
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
@@ -85,6 +87,7 @@ export default class Spaceship extends Entity {
   accelerating: boolean;
   speed: number;
   velocity: XY;
+  collisionLine: Line | null;
 
   constructor({ x, y }: XY) {
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
@@ -96,6 +99,7 @@ export default class Spaceship extends Entity {
     this.accelerating = false;
     this.bullets = [];
     this.velocity = { x: 0, y: 0 };
+    this.collisionLine = null;
   }
 
   move(dir: Direction) {
@@ -180,13 +184,13 @@ export default class Spaceship extends Entity {
   handleCollisionWithLine(line: Line) {
     const vectorOfLine = Vector.fromPoints(line.point1, line.point2);
 
-    const rightNormal = Vector.fromVector(vectorOfLine);
-    rightNormal.toRightNormal;
+    const normal = Vector.fromVector(vectorOfLine);
+    if (this.velocity.y > 0) normal.toRightNormal();
+    else if (this.velocity.y < 0) normal.toLeftNormal();
 
-    const farthestPoint = this.getFarthestPoint(rightNormal);
+    const farthestPoint = this.getFarthestPoint(normal);
     // this vector is used to see which side the farthestPoint lies relative to vectorOfLine
     const testVector = Vector.fromPoints(farthestPoint, line.point1);
-
     if (testVector.getCrossProduct(vectorOfLine) > 0) {
       //testVector is to the right of line
 
@@ -199,43 +203,62 @@ export default class Spaceship extends Entity {
         y: testVector.y + factor * vectorOfLine.y,
       };
 
-      this.updateXPosition(amountOfPenetration.x);
-      this.updateYPosition(amountOfPenetration.y);
+      this.updateXPosition(-amountOfPenetration.x);
+      this.updateYPosition(-amountOfPenetration.y);
+
+      this.velocity.y = -this.velocity.y;
     }
+  }
+
+  handleCollisionWithCircle(boundary: CircleBoundary) {
+    const collisionPoint = getCollisionPointBetweenRectAndCircle(
+      boundary.getCenter(),
+      boundary.radius,
+      this.getVertices()
+    );
+    if (!collisionPoint) return;
+    const slope: XY = getSlopeOfTangent(collisionPoint, boundary.getCenter());
+    this.collisionLine = new Line(
+      { x: collisionPoint.x + slope.x, y: collisionPoint.y + slope.y },
+      { x: collisionPoint.x - slope.x, y: collisionPoint.y - slope.y }
+    );
+    this.handleCollisionWithLine(
+      new Line(
+        { x: collisionPoint.x + slope.x, y: collisionPoint.y + slope.y },
+        { x: collisionPoint.x - slope.x, y: collisionPoint.y - slope.y }
+      )
+    );
   }
 
   handleBoundaryCollision(boundaries: (CircleBoundary | RectBoundary)[]) {
     const vertices = this.getVertices();
     boundaries.forEach((boundary) => {
       let collision = null;
-      // if (boundary.kind === 'circle') {
-      //   collision = checkCollisionBtwnCircleAndRect(
-      //     boundary,
-      //     vertices,
-      //     this.getEdges()
-      //   );
-      // } else {
-      for (let i = 0; i < vertices.length; i++) {
-        collision = getShipCollision(vertices[i], boundary);
-        if (collision) break;
-      }
-      if (!collision) return;
-      switch (collision.axis) {
-        case 'x':
-          this.updateXPosition(
-            this.velocity.x > 0 ? -collision.amount : collision.amount
-          );
-          this.velocity.x = -this.velocity.x;
-          return;
-        case 'y':
-          this.updateYPosition(
-            this.velocity.y > 0 ? -collision.amount : collision.amount
-          );
-          this.velocity.y = -this.velocity.y;
-          return;
+      if (boundary.kind === 'circle') {
+        this.handleCollisionWithCircle(boundary);
+      } else {
+        for (let i = 0; i < vertices.length; i++) {
+          collision = getShipCollision(vertices[i], boundary);
+          if (collision) break;
+        }
+        if (!collision) return;
+        switch (collision.axis) {
+          case 'x':
+            this.updateXPosition(
+              this.velocity.x > 0 ? -collision.amount : collision.amount
+            );
+            this.velocity.x = -this.velocity.x;
+            return;
+          case 'y':
+            this.updateYPosition(
+              this.velocity.y > 0 ? -collision.amount : collision.amount
+            );
+            this.velocity.y = -this.velocity.y;
+            return;
 
-        default:
-          return;
+          default:
+            return;
+        }
       }
     });
   }
@@ -323,6 +346,16 @@ export default class Spaceship extends Entity {
     ) {
       this.drawFlames(c);
     }
+
+    this.drawCollisionLine(c);
+  }
+
+  drawCollisionLine(c: CanvasRenderingContext2D) {
+    if (!this.collisionLine) return;
+    c.beginPath();
+    c.moveTo(this.collisionLine?.point1.x, this.collisionLine?.point1.y);
+    c.lineTo(this.collisionLine?.point2.x, this.collisionLine?.point2.y);
+    c.stroke();
   }
 
   drawFlames(c: CanvasRenderingContext2D) {

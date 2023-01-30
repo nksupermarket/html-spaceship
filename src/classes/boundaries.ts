@@ -28,9 +28,11 @@ export default class Boundary extends Entity {
 
 export class CircleBoundary extends Boundary {
   readonly kind: 'circle';
+  readonly radius: number;
   constructor(el: HTMLElement) {
     super(el);
     this.kind = 'circle';
+    this.radius = this.width / 2;
   }
 
   getCenter(): XY {

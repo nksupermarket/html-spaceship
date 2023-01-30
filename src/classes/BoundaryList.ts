@@ -1,4 +1,4 @@
-import Boundary, { CircleBoundary, RectBoundary } from './Boundary';
+import Boundary, { CircleBoundary, RectBoundary } from './boundaries';
 
 export default class BoundaryList {
   list: (CircleBoundary | RectBoundary)[];

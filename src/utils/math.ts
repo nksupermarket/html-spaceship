@@ -1,4 +1,5 @@
 import { XY } from '../../types/interfaces';
+import Vector from '../classes/Vector';
 
 export function sqr(x: number) {
   return x * x;
@@ -15,4 +16,14 @@ function distToSegmentSquared(p: XY, v: XY, w: XY) {
 }
 export function distToSegment(p: XY, v: XY, w: XY) {
   return Math.sqrt(distToSegmentSquared(p, v, w));
+}
+
+export function distBtwnTwoPoints(v: XY, w: XY) {
+  return Math.sqrt(dist2(v, w));
+}
+
+export function getSlopeOfTangent(point: XY, centerOfCircle: XY): XY {
+  const diff = { x: point.x - centerOfCircle.x, y: point.y - centerOfCircle.y };
+
+  return { x: -diff.y, y: diff.x };
 }

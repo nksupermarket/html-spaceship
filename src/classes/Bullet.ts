@@ -1,4 +1,3 @@
-import { XY } from '../../types/types';
 import Entity from './Entity';
 import { createImage } from '../utils/misc';
 
@@ -17,6 +16,7 @@ import poof04 from '../assets/bullet/Poof/Bullet_Poof_04.png';
 import poof05 from '../assets/bullet/Poof/Bullet_Poof_05.png';
 import poof06 from '../assets/bullet/Poof/Bullet_Poof_06.png';
 import poof07 from '../assets/bullet/Poof/Bullet_Poof_07.png';
+import { XY } from '../../types/interfaces';
 
 let count = 0;
 
