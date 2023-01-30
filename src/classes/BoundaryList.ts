@@ -1,13 +1,17 @@
-import Boundary from './Boundary';
+import Boundary, { CircleBoundary, RectBoundary } from './Boundary';
 
 export default class BoundaryList {
-  list: Boundary[];
+  list: (CircleBoundary | RectBoundary)[];
 
   constructor() {
     const tmp = Array.from(
       document.querySelectorAll('.boundary')
     ) as HTMLElement[];
-    this.list = tmp.map((el: HTMLElement) => new Boundary(el));
+    this.list = tmp.map((el: HTMLElement) => {
+      return window.getComputedStyle(el).borderRadius === '50%'
+        ? new CircleBoundary(el)
+        : new RectBoundary(el);
+    });
   }
 
   removeEmptyBoundaries() {

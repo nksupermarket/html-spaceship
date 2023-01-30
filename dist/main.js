@@ -1521,7 +1521,7 @@
                   );
                 } else {
                   for (var i = 0; i < edges.length; i++) {
-                    collision = (0, checkCollision_1.checkShipEdgeCollision)(
+                    collision = (0, checkCollision_1.checkShipCollision)(
                       edges[i],
                       boundary
                     );
@@ -1907,7 +1907,7 @@
           exports.checkCollisionBtwnCircles =
             exports.checkCollisionBtwnCircleAndRect =
             exports.checkIfWithinBounds =
-            exports.checkShipEdgeCollision =
+            exports.checkShipCollision =
             exports.checkIfInsideRect =
               void 0;
           var math_1 = __webpack_require__(/*! ./math */ './src/utils/math.ts');
@@ -1921,12 +1921,12 @@
             return insideX && insideY;
           }
           exports.checkIfInsideRect = checkIfInsideRect;
-          function checkShipEdgeCollision(edge, rect) {
+          function checkShipCollision(edge, rect) {
             var collideY = rect.y <= edge.y && rect.y + rect.height > edge.y;
             var collideX = rect.x <= edge.x && rect.x + rect.width > edge.x;
             return collideY && collideX;
           }
-          exports.checkShipEdgeCollision = checkShipEdgeCollision;
+          exports.checkShipCollision = checkShipCollision;
           function checkIfWithinBounds(edge, bounds) {
             return (
               edge.x > 0 && edge.x < bounds.x && edge.y > 0 && edge.y < bounds.y

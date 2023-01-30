@@ -1,4 +1,4 @@
-import { XY } from '../../types/types';
+import { XY } from '../../types/interfaces';
 
 export function sqr(x: number) {
   return x * x;

@@ -4,4 +4,4 @@ export const GRAVITY = 5;
 
 export const DIRECTIONS: Direction[] = ['left', 'right', 'down', 'up'];
 
-export const SS_DIM = { height: 100, width: 50 };
+export const SS_DIMENSIONS = { height: 100, width: 50 };

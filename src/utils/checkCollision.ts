@@ -1,6 +1,5 @@
-import { Center } from '../../types/interfaces';
-import { Edges, XY } from '../../types/types';
-import Boundary from '../classes/Boundary';
+import { XY } from '../../types/interfaces';
+import { CircleBoundary } from '../classes/Boundary';
 import Bullet from '../classes/Bullet';
 import Entity from '../classes/Entity';
 import Shootable from '../classes/Shootable';
@@ -18,44 +17,54 @@ export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
   return insideX && insideY;
 }
 
-export function getShipEdgeCollisionAxis(edge: XY, rect: Entity) {
-  const collideY = rect.y <= edge.y && rect.y + rect.height > edge.y;
-  const collideX = rect.x <= edge.x && rect.x + rect.width > edge.x;
+export function getShipCollision(vertex: XY, rect: Entity) {
+  const collideY = rect.y <= vertex.y && rect.y + rect.height > vertex.y;
+  const collideX = rect.x <= vertex.x && rect.x + rect.width > vertex.x;
 
   if (collideY && collideX) {
     const sizeOfYPenetration = Math.min(
-      edge.y - rect.y,
-      rect.y + rect.height - edge.y
+      vertex.y - rect.y,
+      rect.y + rect.height - vertex.y
     );
     const sizeOfXPenetration = Math.min(
-      edge.x - rect.x,
-      rect.x + rect.width - edge.x
+      vertex.x - rect.x,
+      rect.x + rect.width - vertex.x
     );
-    return sizeOfYPenetration > sizeOfXPenetration ? 'y' : 'x';
+    return sizeOfYPenetration > sizeOfXPenetration
+      ? {
+          axis: 'x',
+          amount: sizeOfXPenetration,
+        }
+      : {
+          axis: 'y',
+          amount: sizeOfYPenetration,
+        };
   }
 
   return null;
 }
 
-export function checkShipEdgeCollision(edge: XY, rect: Entity) {
-  const collideY = rect.y <= edge.y && rect.y + rect.height > edge.y;
-  const collideX = rect.x <= edge.x && rect.x + rect.width > edge.x;
+export function checkShipCollision(vertex: XY, rect: Entity) {
+  const collideY = rect.y <= vertex.y && rect.y + rect.height > vertex.y;
+  const collideX = rect.x <= vertex.x && rect.x + rect.width > vertex.x;
 
   return collideY && collideX;
 }
 
-export function getCollisionAxisForBounds(edge: XY, bounds: XY) {
-  if (edge.x < 0 || edge.x > bounds.x) return 'y';
-  else if (edge.y < 0 || edge.y > bounds.y) return 'x';
+export function getCollisionAxisForBounds(vertex: XY, bounds: XY) {
+  if (vertex.x < 0 || vertex.x > bounds.x) return 'y';
+  else if (vertex.y < 0 || vertex.y > bounds.y) return 'x';
   else return null;
 }
 
-export function checkIfWithinBounds(edge: XY, bounds: XY) {
-  return edge.x > 0 && edge.x < bounds.x && edge.y > 0 && edge.y < bounds.y;
+export function checkIfWithinBounds(vertex: XY, bounds: XY) {
+  return (
+    vertex.x > 0 && vertex.x < bounds.x && vertex.y > 0 && vertex.y < bounds.y
+  );
 }
 
-function pointInRectangle(centerOfCircle: XY, rectCorners: XY[]) {
-  const { min, max } = rectCorners.reduce<{ max: XY; min: XY }>(
+function pointInRectangle(centerOfCircle: XY, rectVertices: XY[]) {
+  const { min, max } = rectVertices.reduce<{ max: XY; min: XY }>(
     (acc, curr) => {
       const { min, max } = acc;
 
@@ -92,16 +101,34 @@ function intersectCircle(centerOfCircle: XY, r: number, rectVertices: XY[][]) {
   return false;
 }
 
-export function checkCollisionBtwnCircleAndRect(
-  circle: Shootable | Boundary,
-  rectCorners: XY[],
+function getCollisionPointBetweenRectAndCircle(
+  centerOfCircle: XY,
+  r: number,
   rectVertices: XY[][]
+) {
+  for (const v of rectVertices) {
+    const [p1, p2] = v;
+
+    if (
+      // distance between centerOfCenter and line is less than radius
+      distToSegment(centerOfCircle, p1, p2) < r
+    )
+      return v;
+  }
+
+  return null;
+}
+
+export function checkCollisionBtwnCircleAndRect(
+  circle: Shootable | CircleBoundary,
+  rectVertices: XY[],
+  rectEdges: XY[][]
 ) {
   const centerOfCircle = circle.getCenter();
 
   return (
-    pointInRectangle(centerOfCircle, rectCorners) ||
-    intersectCircle(centerOfCircle, circle.width / 2, rectVertices)
+    pointInRectangle(centerOfCircle, rectVertices) ||
+    intersectCircle(centerOfCircle, circle.width / 2, rectEdges)
   );
 }
 

@@ -1,14 +1,14 @@
 import Boundary from '../classes/Boundary';
 import Spaceship from '../classes/Spaceship';
 import { checkIfInsideRect } from './checkCollision';
-import { SS_DIM } from './constants';
+import { SS_DIMENSIONS } from './constants';
 
 export default function getStartPos(boundaries: Boundary[]) {
   function getRdmPos() {
     return {
-      x: Math.floor(Math.random() * (window.innerWidth - SS_DIM.width)),
+      x: Math.floor(Math.random() * (window.innerWidth - SS_DIMENSIONS.width)),
       y: Math.floor(
-        Math.random() * (window.innerHeight * 0.4 - SS_DIM.height) +
+        Math.random() * (window.innerHeight * 0.4 - SS_DIMENSIONS.height) +
           window.innerHeight * 0.3
       ),
     };

@@ -1,5 +1,7 @@
-import { XY } from './types';
-
+export interface XY {
+  x: number;
+  y: number;
+}
 export interface BaseEntity extends XY {
   height: number;
   width: number;

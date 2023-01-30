@@ -1,5 +1,5 @@
 import Spaceship from './Spaceship';
-import { Mouse, Direction, XY } from '../../types/types';
+import { Mouse, Direction } from '../../types/types';
 import { DIRECTIONS } from '../utils/constants';
 import KeyPress from './KeyPress';
 import BoundaryList from './BoundaryList';
@@ -10,6 +10,7 @@ import {
 } from '../utils/checkCollision';
 import { getTranslateY } from '../utils/misc';
 import getStartPos from '../utils/getStartPos';
+import { XY } from '../../types/interfaces';
 
 export default class GameState {
   spaceship: Spaceship;
@@ -57,12 +58,6 @@ export default class GameState {
       }
     }
     if (this.keyPress.keys.click.pressed) this.spaceship.shoot();
-
-    // handle spaceship running into boundaries
-    this.spaceship.bounce(
-      { x: window.innerWidth, y: window.innerHeight },
-      this.boundaries.list
-    );
 
     // handle scroll
     function shift(this: GameState, translateVal: number, change: number) {
@@ -143,6 +138,12 @@ export default class GameState {
     }
 
     this.spaceship.updateXPosition();
+
+    // handle spaceship running into boundaries
+    this.spaceship.bounce(
+      { x: window.innerWidth, y: window.innerHeight },
+      this.boundaries.list
+    );
 
     // handle deceleration
     if (
