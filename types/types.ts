@@ -10,3 +10,13 @@ export type Mouse = {
 };
 
 export type Bound<T> = { top: T; left: T; right: T; bottom: T };
+
+export type WrapWordsConfig =
+  | {
+      active: false;
+      class: undefined;
+    }
+  | {
+      active: true;
+      class: string;
+    };

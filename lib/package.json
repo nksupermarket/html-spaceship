@@ -1,9 +1,9 @@
 {
   "name": "html-spaceship",
-  "version": "1.2.1",
-  "main": "main.ts",
+  "version": "1.2.7",
+  "main": "main.js",
   "description": "",
-  "types": "src/main.d.ts",
+  "types": "./src/main.d.ts",
   "scripts": {},
   "keywords": [],
   "author": "",

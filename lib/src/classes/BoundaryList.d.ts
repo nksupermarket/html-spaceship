@@ -1,6 +1,6 @@
-import Boundary from './Boundary';
+import { CircleBoundary, RectBoundary } from './boundaries';
 export default class BoundaryList {
-    list: Boundary[];
+    list: (CircleBoundary | RectBoundary)[];
     constructor();
     removeEmptyBoundaries(): void;
     updatePositions(): void;

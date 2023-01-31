@@ -19,22 +19,7 @@ canvas {
 }
 
 .removed {
-  display: none;
-}
-
-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  width: 100vw;
-  padding: 20%;
-}
-
-section div {
-  width: 300px;
-  border-radius: 50%;
-  overflow: hidden;
+  display: none !important;
 }
 
 .shake {

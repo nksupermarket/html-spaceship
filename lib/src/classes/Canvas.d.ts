@@ -4,4 +4,5 @@ export default class Canvas {
     constructor();
     setCorrectSize(): void;
     draw(spaceship: Spaceship): void;
+    remove(): void;
 }

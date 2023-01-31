@@ -10,6 +10,7 @@ export default function wrapWords(
     boundary?: boolean;
   }
 ) {
+  // takes a string and wraps each word in a jsx span node
   return str.split(' ').map((w: string, i, arr) => {
     const rootClass = ['shootable_el'];
 

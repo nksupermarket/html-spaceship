@@ -1,8 +1,9 @@
 import Spaceship from './Spaceship';
-import { Mouse, XY } from '../../types/types';
+import { Mouse } from '../../types/types';
 import KeyPress from './KeyPress';
 import BoundaryList from './BoundaryList';
 import ShootableList from './ShootableList';
+import { XY } from '../../types/interfaces';
 export default class GameState {
     spaceship: Spaceship;
     boundaries: BoundaryList;

@@ -2,10 +2,6 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body,
 html {
   margin: 0;
@@ -20,6 +16,7 @@ canvas {
 
 .removed {
   opacity: 0;
+  display: none !important;
 }
 
 section {

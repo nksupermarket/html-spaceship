@@ -1,5 +1,5 @@
-import { XY } from '../../types/types';
 import Entity from './Entity';
+import { XY } from '../../types/interfaces';
 declare const bulletSprites: {
     idle: HTMLImageElement[];
     poof: HTMLImageElement[];
@@ -11,6 +11,7 @@ export default class Bullet extends Entity {
     currAction: Action;
     spriteIdx: 0 | 1 | 2 | 3 | 4 | 5 | 6;
     status: 'alive' | 'dieing' | 'dead';
+    velocity: XY;
     constructor({ x, y }: XY, slope: XY);
     draw(c: CanvasRenderingContext2D): void;
     updatePosition(): void;

@@ -1,13 +1,8 @@
 import { Center, MouseInterface, XY } from '../../types/interfaces';
 import { Direction } from '../../types/types';
-import spaceshipPic from '../assets/rocket-lightmode.png';
-import {
-  checkIfWithinBounds,
-  getCollisionBetweenRectAndCircle,
-  getShipCollision,
-} from '../utils/checkCollision';
+import spaceshipPic from '../assets/optimized/rocket-lightmode.png';
+import { getCollisionBetweenRectAndCircle } from '../utils/checkCollision';
 import { SS_DIMENSIONS } from '../utils/constants';
-import { getSlopeOfTangent } from '../utils/math';
 import { createImage, getExtremities } from '../utils/misc';
 import { CircleBoundary, RectBoundary } from './boundaries';
 import Bullet from './Bullet';
@@ -72,53 +67,53 @@ const drawRoundRect = function (
   }
 };
 
-export const spaceshipImg = createImage(spaceshipPic);
-
 export default class Spaceship extends Entity {
   angle: number;
   shotAvailable: boolean;
   bullets: Bullet[];
   decelerationTime: number;
-  acceleration: number;
+  readonly ACCELERATION_RATE: number;
   accelerating: boolean;
-  speed: number;
+  readonly MAX_SPEED: number;
   velocity: XY;
-  collisionLine: Line | null;
+  readonly IMAGE: HTMLImageElement;
 
   constructor({ x, y }: XY) {
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
-    this.speed = 10;
+    this.MAX_SPEED = 10;
     this.angle = (90 * Math.PI) / 2;
     this.shotAvailable = true;
     this.decelerationTime = 0;
-    this.acceleration = 0.05;
+    this.ACCELERATION_RATE = 0.05;
     this.accelerating = false;
     this.bullets = [];
     this.velocity = { x: 0, y: 0 };
-    this.collisionLine = null;
+    this.IMAGE = createImage(spaceshipPic);
   }
 
   move(dir: Direction) {
     this.resetDeceleration();
     switch (dir) {
       case 'left': {
-        this.velocity.x -= this.acceleration * this.speed;
-        if (this.velocity.x < -this.speed) this.velocity.x = -this.speed;
+        this.velocity.x -= this.ACCELERATION_RATE * this.MAX_SPEED;
+        if (this.velocity.x < -this.MAX_SPEED)
+          this.velocity.x = -this.MAX_SPEED;
         break;
       }
       case 'right': {
-        this.velocity.x += this.acceleration * this.speed;
-        if (this.velocity.x > this.speed) this.velocity.x = this.speed;
+        this.velocity.x += this.ACCELERATION_RATE * this.MAX_SPEED;
+        if (this.velocity.x > this.MAX_SPEED) this.velocity.x = this.MAX_SPEED;
         break;
       }
       case 'up': {
-        this.velocity.y -= this.acceleration * this.speed;
-        if (this.velocity.y < -this.speed) this.velocity.y = -this.speed;
+        this.velocity.y -= this.ACCELERATION_RATE * this.MAX_SPEED;
+        if (this.velocity.y < -this.MAX_SPEED)
+          this.velocity.y = -this.MAX_SPEED;
         break;
       }
       case 'down': {
-        this.velocity.y += this.acceleration * this.speed;
-        if (this.velocity.y > this.speed) this.velocity.y = this.speed;
+        this.velocity.y += this.ACCELERATION_RATE * this.MAX_SPEED;
+        if (this.velocity.y > this.MAX_SPEED) this.velocity.y = this.MAX_SPEED;
         break;
       }
     }
@@ -168,85 +163,82 @@ export default class Spaceship extends Entity {
       this.getVertices()
     );
     if (!collision) return;
-    const { pointOfCollision, correction } = collision;
-    const slope: XY = getSlopeOfTangent(pointOfCollision, boundary.getCenter());
-    this.collisionLine = new Line(
-      { x: pointOfCollision.x + slope.x, y: pointOfCollision.y + slope.y },
-      { x: pointOfCollision.x - slope.x, y: pointOfCollision.y - slope.y }
-    );
+    const { correction, normal } = collision;
 
     this.updateXPosition(correction.x);
     this.updateYPosition(correction.y);
+
+    // explanation of how collision is resolved https://stackoverflow.com/a/4523556/6815335
+    normal.normalize();
+    const distanceAlongNormal = normal.getDotProduct(this.velocity);
+
+    this.velocity.x -= 2.0 * distanceAlongNormal * normal.x;
+    this.velocity.y -= 2.0 * distanceAlongNormal * normal.y;
+  }
+
+  handleCollisionWithRect(boundary: RectBoundary) {
+    const vertices = this.getVertices();
+
+    let collision = null;
+    for (let i = 0; i < vertices.length; i++) {
+      const collideY =
+        boundary.y <= vertices[i].y &&
+        boundary.y + boundary.height > vertices[i].y;
+      const collideX =
+        boundary.x <= vertices[i].x &&
+        boundary.x + boundary.width > vertices[i].x;
+
+      if (collideY && collideX) {
+        // find whether the edge the ship collided with is a horizontal edge or vertical by comparing how deep the ship is on x and y axis. Deeper on x-axis means the ship hit a horizontal edge, deeper on y-axis means the ship hit a vertical edge
+        const sizeOfYPenetration = Math.min(
+          vertices[i].y - boundary.y,
+          boundary.y + boundary.height - vertices[i].y
+        );
+        const sizeOfXPenetration = Math.min(
+          vertices[i].x - boundary.x,
+          boundary.x + boundary.width - vertices[i].x
+        );
+        collision =
+          sizeOfYPenetration > sizeOfXPenetration
+            ? {
+                axis: 'x',
+                amount: sizeOfXPenetration,
+              }
+            : {
+                axis: 'y',
+                amount: sizeOfYPenetration,
+              };
+      }
+      if (collision) break;
+    }
+    if (!collision) return;
+    switch (collision.axis) {
+      case 'x':
+        this.updateXPosition(
+          this.velocity.x > 0 ? -collision.amount : collision.amount
+        );
+        this.velocity.x = -this.velocity.x;
+        return;
+      case 'y':
+        this.updateYPosition(
+          this.velocity.y > 0 ? -collision.amount : collision.amount
+        );
+        this.velocity.y = -this.velocity.y;
+        return;
+
+      default:
+        return;
+    }
   }
 
   handleBoundaryCollision(boundaries: (CircleBoundary | RectBoundary)[]) {
-    const vertices = this.getVertices();
     boundaries.forEach((boundary) => {
-      let collision = null;
       if (boundary.kind === 'circle') {
         this.handleCollisionWithCircle(boundary);
-      } else {
-        for (let i = 0; i < vertices.length; i++) {
-          collision = getShipCollision(vertices[i], boundary);
-          if (collision) break;
-        }
-        if (!collision) return;
-        switch (collision.axis) {
-          case 'x':
-            this.updateXPosition(
-              this.velocity.x > 0 ? -collision.amount : collision.amount
-            );
-            this.velocity.x = -this.velocity.x;
-            return;
-          case 'y':
-            this.updateYPosition(
-              this.velocity.y > 0 ? -collision.amount : collision.amount
-            );
-            this.velocity.y = -this.velocity.y;
-            return;
-
-          default:
-            return;
-        }
+      } else if (boundary.kind === 'rect') {
+        this.handleCollisionWithRect(boundary);
       }
     });
-  }
-
-  bounce(bounds: XY, boundaries: (CircleBoundary | RectBoundary)[]) {
-    this.handleBoundsCollision(bounds);
-    this.handleBoundaryCollision(boundaries);
-    // // handle element boundaries
-    // boundaries.forEach((boundary) => {
-    //   let collision = null;
-
-    //   if (boundary.circle) {
-    //     collision = checkCollisionBtwnCircleAndRect(
-    //       boundary,
-    //       this.getVertices(),
-    //       this.getEdges()
-    //     );
-    //   } else {
-    //     for (let i = 0; i < edges.length; i++) {
-    //       collision = getShipCollisionAxis(edges[i], boundary);
-    //       if (collision) break;
-    //     }
-    //   }
-    //   switch (collision) {
-    //     case 'x':
-    //       this.velocity.y = -this.velocity.y;
-    //       return;
-    //     case 'y':
-    //       this.velocity.x = -this.velocity.x;
-    //       return;
-    //     case true: {
-    //       this.velocity.x = -this.velocity.x;
-    //       this.velocity.y = -this.velocity.y;
-    //       return;
-    //     }
-    //     default:
-    //       return;
-    //   }
-    // });
   }
 
   updateXPosition(shift = this.velocity.x) {
@@ -280,12 +272,13 @@ export default class Spaceship extends Entity {
   }
 
   draw(c: CanvasRenderingContext2D) {
+    console.log(this.IMAGE);
     const { xCenter, yCenter } = this.getCenter();
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.translate(xCenter, yCenter);
     c.rotate(this.angle);
     c.translate(-xCenter, -yCenter);
-    c.drawImage(spaceshipImg, this.x, this.y, this.width, this.height);
+    c.drawImage(this.IMAGE, this.x, this.y, this.width, this.height);
     c.setTransform(1, 0, 0, 1, 0, 0);
 
     if (
@@ -295,16 +288,6 @@ export default class Spaceship extends Entity {
     ) {
       this.drawFlames(c);
     }
-
-    this.drawCollisionLine(c);
-  }
-
-  drawCollisionLine(c: CanvasRenderingContext2D) {
-    if (!this.collisionLine) return;
-    c.beginPath();
-    c.moveTo(this.collisionLine?.point1.x, this.collisionLine?.point1.y);
-    c.lineTo(this.collisionLine?.point2.x, this.collisionLine?.point2.y);
-    c.stroke();
   }
 
   drawFlames(c: CanvasRenderingContext2D) {
@@ -317,8 +300,8 @@ export default class Spaceship extends Entity {
 
     const length =
       Math.max(
-        Math.abs(this.velocity.x / this.speed),
-        Math.abs(this.velocity.y / this.speed)
+        Math.abs(this.velocity.x / this.MAX_SPEED),
+        Math.abs(this.velocity.y / this.MAX_SPEED)
       ) * 40;
 
     c.fillStyle = '#F18805';
@@ -365,18 +348,14 @@ export default class Spaceship extends Entity {
     c.setTransform(1, 0, 0, 1, 0, 0);
   }
 
-  alignToMouse(mouse: MouseInterface, bounds: XY) {
+  alignToMouse(mouse: MouseInterface) {
     if (mouse.x === null || mouse.y === null) return;
     const { xCenter, yCenter } = this.getCenter();
 
     const dx = mouse.x - xCenter;
     const dy = mouse.y - yCenter;
+    // subtract 90deg so that spaceship nose faces mouse
     const theta = Math.atan2(dy, dx) - Math.PI / 2;
-
-    const edgesAfterRotation = this.getVertices(theta);
-    for (let i = 0; i < edgesAfterRotation.length; i++) {
-      if (!checkIfWithinBounds(edgesAfterRotation[i], bounds)) return;
-    }
 
     this.angle = theta;
   }

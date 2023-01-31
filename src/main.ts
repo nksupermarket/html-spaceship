@@ -1,6 +1,8 @@
+import { Config, KeysConfig } from '../types/interfaces';
 import Canvas from './classes/Canvas';
 import GameState from './classes/GameState';
 import './style.css';
+import wrapWords from './wrapWords';
 
 interface ActiveState {
   canvas: Canvas;
@@ -25,39 +27,38 @@ function animate() {
   requestAnimationFrame(animate);
 }
 
-function toggleKeypress(key: string, keyIsPressed: boolean) {
-  if (!state.active) return;
+const toggleKeyPress =
+  (keysConfig: KeysConfig, state: DeactiveState | ActiveState) =>
+  (key: string, keyIsPressed: boolean) => {
+    if (!state.active) return;
 
-  switch (key) {
-    case 'a':
-    case 'ArrowLeft': {
-      state.gameState.keyPress.keys.left.pressed = keyIsPressed;
-      state.gameState.spaceship.accelerating = keyIsPressed;
-      break;
+    switch (key) {
+      case keysConfig.left: {
+        state.gameState.keyPress.keys.left.pressed = keyIsPressed;
+        state.gameState.spaceship.accelerating = keyIsPressed;
+        break;
+      }
+      case keysConfig.right: {
+        state.gameState.keyPress.keys.right.pressed = keyIsPressed;
+        state.gameState.spaceship.accelerating = keyIsPressed;
+        break;
+      }
+      case keysConfig.up: {
+        state.gameState.keyPress.keys.up.pressed = keyIsPressed;
+        state.gameState.spaceship.accelerating = keyIsPressed;
+        break;
+      }
+      case keysConfig.down: {
+        state.gameState.keyPress.keys.down.pressed = keyIsPressed;
+        state.gameState.spaceship.accelerating = keyIsPressed;
+        break;
+      }
     }
-    case 'd':
-    case 'ArrowRight': {
-      state.gameState.keyPress.keys.right.pressed = keyIsPressed;
-      state.gameState.spaceship.accelerating = keyIsPressed;
-      break;
-    }
-    case 'w':
-    case 'ArrowUp': {
-      state.gameState.keyPress.keys.up.pressed = keyIsPressed;
-      state.gameState.spaceship.accelerating = keyIsPressed;
-      break;
-    }
-    case 's':
-    case 'ArrowDown': {
-      state.gameState.keyPress.keys.down.pressed = keyIsPressed;
-      state.gameState.spaceship.accelerating = keyIsPressed;
-      break;
-    }
-  }
-}
+  };
 
-function getEventHandlers() {
+function getEventHandlers(keysConfig: KeysConfig) {
   if (!state.active) return;
+  const onKeyPress = toggleKeyPress(keysConfig, state);
   return {
     resizeCanvas: () => {
       state.gameState.shootables.list = state.gameState.shootables.getList();
@@ -89,24 +90,64 @@ function getEventHandlers() {
     },
 
     handleKeyPress: (e: KeyboardEvent) => {
-      toggleKeypress(e.key, true);
+      onKeyPress(e.key, true);
     },
 
     handleKeyUp: (e: KeyboardEvent) => {
-      toggleKeypress(e.key, false);
+      onKeyPress(e.key, false);
     },
   };
 }
-window.addEventListener('dblclick', run);
-export default function run() {
+
+let keysConfigHandler = {
+  get: function (target: KeysConfig, name: string) {
+    switch (name) {
+      case 'left': {
+        return target[name] || 'a';
+      }
+      case 'right': {
+        return target[name] || 'd';
+      }
+      case 'up': {
+        return target[name] || 'w';
+      }
+      case 'down': {
+        return target[name] || 's';
+      }
+      case 'deactivate': {
+        return target[name] || ' ';
+      }
+    }
+  },
+};
+
+let configHandler = {
+  get: function (target: Config, name: string) {
+    switch (name) {
+      case 'keys': {
+        return target[name] || new Proxy({} as KeysConfig, keysConfigHandler);
+      }
+      case 'wrapWords': {
+        return target[name] || { active: false };
+      }
+    }
+  },
+};
+
+window.addEventListener('dblclick', () => run());
+
+export default function run(config?: Config | undefined) {
+  config = config || ({} as Config);
+  const p = new Proxy(config, configHandler) as Required<Config>;
   if (state.active) return;
+  if (p.wrapWords.active) wrapWords(p.wrapWords.class);
   document.documentElement.style.overflow = 'hidden';
 
   const proxy = state as unknown as ActiveState;
   proxy.active = true;
   proxy.canvas = new Canvas();
   proxy.gameState = new GameState();
-  const eventHandlers = getEventHandlers()!;
+  const eventHandlers = getEventHandlers(p.keys)!;
 
   window.addEventListener('resize', eventHandlers.resizeCanvas);
 
@@ -120,7 +161,7 @@ export default function run() {
   animate();
 
   window.addEventListener('keydown', function deactivate(e) {
-    if (e.key != ' ') return;
+    if (e.key != p.keys.deactivate) return;
 
     proxy.canvas?.remove();
     state.active = false;
@@ -136,6 +177,9 @@ export default function run() {
 
     window.removeEventListener('keydown', deactivate);
 
+    document
+      .querySelectorAll('.removed')
+      .forEach((el) => el.classList.remove('removed'));
     document.documentElement.style.overflow = 'scroll';
   });
 }

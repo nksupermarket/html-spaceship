@@ -17,6 +17,10 @@ export default class Vector {
     return new Vector(vector.x, vector.y);
   }
 
+  getDotProduct(v2: XY) {
+    return v2.x * this.x + v2.y * this.y;
+  }
+
   getCrossProduct(vector: Vector) {
     return this.x * vector.y - this.y * vector.x;
   }
@@ -42,8 +46,10 @@ export default class Vector {
   }
 
   normalize() {
-    this.x = this.x / this.getMagnitude();
-    this.y = this.y / this.getMagnitude();
+    const magnitude = this.getMagnitude();
+    this.x /= magnitude;
+    this.y /= magnitude;
+    console.log(this.x, this.y);
     return this;
   }
 

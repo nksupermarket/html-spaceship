@@ -41,10 +41,7 @@ export default class GameState {
   }
 
   update() {
-    this.spaceship.alignToMouse(this.mouse, {
-      x: window.innerWidth,
-      y: window.innerHeight,
-    });
+    this.spaceship.alignToMouse(this.mouse);
 
     // handle key press
     let keyPressed = false;
@@ -58,6 +55,13 @@ export default class GameState {
       }
     }
     if (this.keyPress.keys.click.pressed) this.spaceship.shoot();
+
+    // handle spaceship running into boundaries
+    this.spaceship.handleBoundsCollision({
+      x: window.innerWidth,
+      y: window.innerHeight,
+    });
+    this.spaceship.handleBoundaryCollision(this.boundaries.list);
 
     // handle scroll
     function shift(this: GameState, translateVal: number, change: number) {
@@ -88,7 +92,7 @@ export default class GameState {
       this.spaceship.updateYPosition();
     } else if (
       // when we are on top of the page, we want to be able to go beyond scrollBoundary.top
-      distanceTraveled === window.scrollY &&
+      distanceTraveled <= window.scrollY &&
       this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.bottom
     ) {
       this.spaceship.updateYPosition();
@@ -138,12 +142,6 @@ export default class GameState {
     }
 
     this.spaceship.updateXPosition();
-
-    // handle spaceship running into boundaries
-    this.spaceship.bounce(
-      { x: window.innerWidth, y: window.innerHeight },
-      this.boundaries.list
-    );
 
     // handle deceleration
     if (
