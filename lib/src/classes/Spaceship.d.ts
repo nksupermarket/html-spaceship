@@ -13,7 +13,7 @@ export default class Spaceship extends Entity {
     readonly MAX_SPEED: number;
     velocity: XY;
     readonly IMAGE: HTMLImageElement;
-    constructor({ x, y }: XY);
+    constructor({ x, y }: XY, theme?: 'dark' | 'light');
     move(dir: Direction): void;
     handleBoundsCollision(bounds: XY): void;
     handleCollisionWithCircle(boundary: CircleBoundary): void;

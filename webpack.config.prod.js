@@ -12,14 +12,14 @@ module.exports = {
       },
       {
         test: /\.png$/,
-        loader: 'file-loader',
+        loader: 'url-loader',
         options: {
           name: 'images/[name].[ext]',
         },
       },
       {
         test: /\.css$/i,
-        use: ['css-loader'],
+        use: ['style-loader', 'css-loader'],
       },
     ],
   },

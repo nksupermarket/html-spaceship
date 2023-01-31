@@ -13,7 +13,8 @@ html {
   position: relative;
 }
 
-canvas {
+.space {
+  z-index: 99;
   position: fixed;
   top: 0;
 }

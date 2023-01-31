@@ -130,11 +130,12 @@ let configHandler = {
       case 'wrapWords': {
         return target[name] || { active: false };
       }
+      case 'theme': {
+        return target[name] || 'light';
+      }
     }
   },
 };
-
-window.addEventListener('dblclick', () => run());
 
 export default function run(config?: Config | undefined) {
   config = config || ({} as Config);
@@ -146,7 +147,7 @@ export default function run(config?: Config | undefined) {
   const proxy = state as unknown as ActiveState;
   proxy.active = true;
   proxy.canvas = new Canvas();
-  proxy.gameState = new GameState();
+  proxy.gameState = new GameState(p.theme);
   const eventHandlers = getEventHandlers(p.keys)!;
 
   window.addEventListener('resize', eventHandlers.resizeCanvas);

@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
   mode: 'development',
-  entry: { main: './src/main.ts', wrapWords: './src/wrapWords.ts' },
+  entry: { main: './src/dev.ts' },
   devtool: 'inline-source-map',
   devServer: {
     port: 8080,

@@ -1,13 +1,11 @@
 import { Center, MouseInterface, XY } from '../../types/interfaces';
 import { Direction } from '../../types/types';
-import spaceshipPic from '../assets/optimized/rocket-lightmode.png';
 import { getCollisionBetweenRectAndCircle } from '../utils/checkCollision';
 import { SS_DIMENSIONS } from '../utils/constants';
 import { createImage, getExtremities } from '../utils/misc';
 import { CircleBoundary, RectBoundary } from './boundaries';
 import Bullet from './Bullet';
 import Entity from './Entity';
-import Line from './Line';
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
@@ -78,7 +76,9 @@ export default class Spaceship extends Entity {
   velocity: XY;
   readonly IMAGE: HTMLImageElement;
 
-  constructor({ x, y }: XY) {
+  constructor({ x, y }: XY, theme?: 'dark' | 'light') {
+    theme = theme || 'light';
+    console.log(theme);
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
     this.MAX_SPEED = 10;
     this.angle = (90 * Math.PI) / 2;
@@ -88,7 +88,11 @@ export default class Spaceship extends Entity {
     this.accelerating = false;
     this.bullets = [];
     this.velocity = { x: 0, y: 0 };
-    this.IMAGE = createImage(spaceshipPic);
+    this.IMAGE = createImage(
+      theme === 'light'
+        ? require('../assets/optimized/rocket-lightmode.png').default
+        : require('../assets/optimized/rocket-darkmode.png').default
+    );
   }
 
   move(dir: Direction) {
@@ -272,7 +276,6 @@ export default class Spaceship extends Entity {
   }
 
   draw(c: CanvasRenderingContext2D) {
-    console.log(this.IMAGE);
     const { xCenter, yCenter } = this.getCenter();
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.translate(xCenter, yCenter);

@@ -5,6 +5,7 @@ export default class Canvas {
 
   constructor() {
     this.el = document.createElement('canvas');
+    this.el.classList.add('space');
     document.documentElement.appendChild(this.el);
     this.setCorrectSize();
   }

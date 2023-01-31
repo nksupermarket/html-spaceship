@@ -1,5 +1,5 @@
 {
-  "exclude": ["./tests", "./dist", "./lib"],
+  "exclude": ["./tests", "./dist", "./lib", "./src/dev.ts"],
   "compilerOptions": {
     "target": "es5",
     "module": "commonjs",

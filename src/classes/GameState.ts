@@ -21,7 +21,7 @@ export default class GameState {
   scrollBoundary: { top: number; bottom: number };
   scrollSpeed: number;
 
-  constructor(startPos?: XY) {
+  constructor(theme: 'light' | 'dark' = 'light') {
     this.scrollSpeed = 0;
     this.scrollBoundary = {
       // local minima/maxima that triggers a scroll upon contact
@@ -29,9 +29,7 @@ export default class GameState {
       bottom: window.innerHeight * 0.7,
     };
     this.boundaries = new BoundaryList();
-    this.spaceship = new Spaceship(
-      startPos || getStartPos(this.boundaries.list)
-    );
+    this.spaceship = new Spaceship(getStartPos(this.boundaries.list), theme);
     this.shootables = new ShootableList();
     this.keyPress = new KeyPress();
     this.mouse = {

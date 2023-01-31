@@ -35,4 +35,5 @@ export interface KeysConfig {
 export interface Config {
   keys?: KeysConfig;
   wrapWords?: WrapWordsConfig;
+  theme?: 'dark' | 'light';
 }
