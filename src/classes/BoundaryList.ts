@@ -1,4 +1,4 @@
-import Boundary, { CircleBoundary, RectBoundary } from './boundaries';
+import { CircleBoundary, RectBoundary } from './boundaries';
 
 export default class BoundaryList {
   list: (CircleBoundary | RectBoundary)[];
@@ -14,10 +14,10 @@ export default class BoundaryList {
     });
   }
 
-  removeBoundaryIfEmpty(i: number) {
+  removeBoundaryIfEmpty(i: number, removeClass: string) {
     if (
       this.list[i].height === 0 ||
-      this.list[i].el.classList.contains('removed')
+      this.list[i].el.classList.contains(removeClass)
     ) {
       this.list.splice(i, 1);
     }

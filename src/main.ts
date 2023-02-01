@@ -127,8 +127,8 @@ let configHandler = {
       case 'keys': {
         return target[name] || new Proxy({} as KeysConfig, keysConfigHandler);
       }
-      case 'wrapWords': {
-        return target[name] || { active: false };
+      case 'wrapWordsClass': {
+        return target[name] || undefined;
       }
       case 'theme': {
         return target[name] || 'light';
@@ -141,13 +141,13 @@ export default function run(config?: Config | undefined) {
   config = config || ({} as Config);
   const p = new Proxy(config, configHandler) as Required<Config>;
   if (state.active) return;
-  if (p.wrapWords.active) wrapWords(p.wrapWords.class);
+  if (p.wrapWordsClass) wrapWords(p.wrapWordsClass);
   document.documentElement.style.overflow = 'hidden';
 
   const proxy = state as unknown as ActiveState;
   proxy.active = true;
   proxy.canvas = new Canvas();
-  proxy.gameState = new GameState(p.theme);
+  proxy.gameState = new GameState(config.removedClass, p.theme);
   const eventHandlers = getEventHandlers(p.keys)!;
 
   function preventDefault(e: Event) {
@@ -181,12 +181,13 @@ export default function run(config?: Config | undefined) {
     window.removeEventListener('mouseup', eventHandlers.resetShoot);
     window.removeEventListener('keydown', eventHandlers.handleKeyPress);
     window.removeEventListener('keyup', eventHandlers.handleKeyUp);
+    window.removeEventListener('contextmenu', preventDefault);
 
     window.removeEventListener('keydown', deactivate);
 
     document
-      .querySelectorAll('.removed')
-      .forEach((el) => el.classList.remove('removed'));
+      .querySelectorAll(p.removedClass)
+      .forEach((el) => el.classList.remove(p.removedClass));
     document.documentElement.style.overflow = 'scroll';
   });
 }

@@ -5,7 +5,7 @@ export default class Shootable extends Entity {
     el: HTMLElement;
     circle: boolean;
     constructor(x: number, y: number, width: number, height: number, el: HTMLElement);
-    removeEl(): void;
+    removeEl(className: string): void;
     onHit(): void;
     shake(): void;
     updatePos(): void;

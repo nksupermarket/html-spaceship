@@ -8,8 +8,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {},
-  "dependencies": {
-    "react": "^18.2.0"
-  }
+  "devDependencies": {}
 }

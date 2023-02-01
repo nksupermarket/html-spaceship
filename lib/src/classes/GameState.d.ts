@@ -1,8 +1,8 @@
-import Spaceship from './Spaceship';
 import { Mouse } from '../../types/types';
-import KeyPress from './KeyPress';
 import BoundaryList from './BoundaryList';
+import KeyPress from './KeyPress';
 import ShootableList from './ShootableList';
+import Spaceship from './Spaceship';
 export default class GameState {
     spaceship: Spaceship;
     boundaries: BoundaryList;
@@ -13,7 +13,7 @@ export default class GameState {
         top: number;
         bottom: number;
     };
-    scrollSpeed: number;
-    constructor(theme?: 'light' | 'dark');
+    readonly REMOVE_CLASS: string;
+    constructor(removeClass: string, theme: 'light' | 'dark');
     update(): void;
 }

@@ -2,9 +2,7 @@ import run from './main';
 
 window.addEventListener('dblclick', () =>
   run({
-    wrapWords: {
-      active: true,
-      class: 'abc',
-    },
+    wrapWordsClass: 'abc',
+    removedClass: 'removed',
   })
 );

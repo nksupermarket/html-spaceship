@@ -18,8 +18,9 @@ export default class GameState {
   mouse: Mouse;
   keyPress: KeyPress;
   scrollBoundary: { top: number; bottom: number };
+  readonly REMOVE_CLASS: string;
 
-  constructor(theme: 'light' | 'dark' = 'light') {
+  constructor(removeClass: string, theme: 'light' | 'dark') {
     this.scrollBoundary = {
       // local minima/maxima that triggers a scroll upon contact
       top: window.innerHeight * 0.3,
@@ -33,6 +34,7 @@ export default class GameState {
       x: null,
       y: null,
     };
+    this.REMOVE_CLASS = removeClass;
   }
 
   update() {
@@ -169,12 +171,12 @@ export default class GameState {
 
       if (i < this.shootables.list.length) {
         this.shootables.list[i].updatePos();
-        this.shootables.removeElIfDead(i);
+        this.shootables.removeElIfDead(i, this.REMOVE_CLASS);
       }
       if (i < this.boundaries.list.length) {
         this.boundaries.list[i].updatePos();
         this.boundaries.list[i].recalculateSize();
-        this.boundaries.removeBoundaryIfEmpty(i);
+        this.boundaries.removeBoundaryIfEmpty(i, this.REMOVE_CLASS);
       }
       if (i < this.spaceship.bullets.length) {
         this.spaceship.bullets[i].y -= amountToShift;

@@ -18,8 +18,8 @@ export default class Shootable extends Entity {
     this.circle = window.getComputedStyle(el).borderRadius === '50%';
   }
 
-  removeEl() {
-    this.el.className = 'removed';
+  removeEl(className: string) {
+    this.el.classList.add(className);
   }
 
   onHit() {

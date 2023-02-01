@@ -16,9 +16,9 @@ export default class ShootableList {
     });
   }
 
-  removeElIfDead(i: number) {
+  removeElIfDead(i: number, className: string) {
     if (this.list[i].lifePoints <= 0) {
-      this.list[i].removeEl();
+      this.list[i].removeEl(className);
       this.list.splice(i, 1);
     }
   }

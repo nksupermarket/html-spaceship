@@ -1,4 +1,3 @@
-import { WrapWordsConfig } from './types';
 export interface XY {
     x: number;
     y: number;
@@ -28,6 +27,7 @@ export interface KeysConfig {
 }
 export interface Config {
     keys?: KeysConfig;
-    wrapWords?: WrapWordsConfig;
+    wrapWordsClass?: string;
     theme?: 'dark' | 'light';
+    removedClass: string;
 }

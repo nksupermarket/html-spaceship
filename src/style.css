@@ -1,26 +1,7 @@
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body,
-html {
-  margin: 0;
-  padding: 0;
-  position: relative;
-}
-
 .space {
   z-index: 99;
   position: fixed;
   top: 0;
-}
-
-.removed {
-  display: none !important;
 }
 
 .shake {

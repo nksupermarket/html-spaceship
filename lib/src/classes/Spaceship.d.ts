@@ -1,13 +1,21 @@
 import { Center, MouseInterface, XY } from '../../types/interfaces';
-import { Direction } from '../../types/types';
+import { Axis, Direction } from '../../types/types';
 import { CircleBoundary, RectBoundary } from './boundaries';
 import Bullet from './Bullet';
 import Entity from './Entity';
+interface DecelerateAxis {
+    decelerating: boolean;
+    scalar: number;
+}
+interface DecelerateRecord {
+    x: DecelerateAxis;
+    y: DecelerateAxis;
+}
 export default class Spaceship extends Entity {
     angle: number;
     shotAvailable: boolean;
     bullets: Bullet[];
-    decelerationTime: number;
+    decelerateRecord: DecelerateRecord;
     readonly ACCELERATION_RATE: number;
     accelerating: boolean;
     readonly MAX_SPEED: number;
@@ -26,13 +34,13 @@ export default class Spaceship extends Entity {
     draw(c: CanvasRenderingContext2D): void;
     drawFlames(c: CanvasRenderingContext2D): void;
     alignToMouse(mouse: MouseInterface): void;
-    resetDeceleration(): void;
+    resetDeceleration(axis: Axis): void;
     decelerate(): void;
-    applyInertia(): void;
-    removeBullet(id: number): void;
+    removeBullet(i: number): void;
     getVertices(angle?: number): XY[];
     getEdges(): {
         x: number;
         y: number;
     }[][];
 }
+export {};

@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
   mode: 'production',
-  entry: { main: './src/main.ts', wrapWords: './src/utils/wrapWords.tsx' },
+  entry: { main: './src/main.ts' },
   module: {
     rules: [
       {
