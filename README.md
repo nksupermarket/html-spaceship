@@ -1,6 +1,14 @@
 # HTML Spaceship
 
-This library adds a spaceship onto your web page. The main file exports a run function that takes in a config object.
+This library adds a spaceship onto your web page.
+
+To install:
+
+```
+npm i html-spaceship
+```
+
+The main file exports a run function that takes in a config object.
 
 ```
 const config: Config = {
