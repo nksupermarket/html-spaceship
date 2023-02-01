@@ -4,22 +4,20 @@ export default class BoundaryList {
   list: (CircleBoundary | RectBoundary)[];
 
   constructor() {
-    const tmp = Array.from(
-      document.querySelectorAll('.boundary')
-    ) as HTMLElement[];
-    this.list = tmp.map((el: HTMLElement) => {
-      return window.getComputedStyle(el).borderRadius === '50%'
-        ? new CircleBoundary(el)
-        : new RectBoundary(el);
-    });
+    this.list = this.getList();
   }
 
-  removeBoundaryIfEmpty(i: number, removeClass: string) {
-    if (
-      this.list[i].height === 0 ||
-      this.list[i].el.classList.contains(removeClass)
-    ) {
-      this.list.splice(i, 1);
-    }
+  getList() {
+    return Array.from(document.querySelectorAll<HTMLElement>('.boundary')).map(
+      (el) => {
+        return window.getComputedStyle(el).borderRadius === '50%'
+          ? new CircleBoundary(el)
+          : new RectBoundary(el);
+      }
+    );
+  }
+
+  removeBoundary(i: number) {
+    this.list.splice(i, 1);
   }
 }

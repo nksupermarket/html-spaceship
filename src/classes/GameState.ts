@@ -51,13 +51,6 @@ export default class GameState {
     }
     if (this.keyPress.keys.click.pressed) this.spaceship.shoot();
 
-    // handle spaceship running into boundaries
-    this.spaceship.handleBoundsCollision({
-      x: window.innerWidth,
-      y: window.innerHeight,
-    });
-    this.spaceship.handleBoundaryCollision(this.boundaries.list);
-
     // handle scroll
 
     const distanceFromTopOfDocumentToLastScreen = Math.floor(
@@ -132,30 +125,34 @@ export default class GameState {
       this.spaceship.updateYPosition();
     }
 
+    // handle spaceship running into boundaries
+    this.spaceship.handleBoundsCollision({
+      x: window.innerWidth,
+      y: window.innerHeight,
+    });
+    this.spaceship.handleBoundaryCollision(this.boundaries.list);
+
     this.spaceship.updateXPosition();
 
     // handle deceleration
     if (this.spaceship.velocity.x || this.spaceship.velocity.y)
       this.spaceship.decelerate();
 
-    // .removeBullet() mutates the bullet array so this feels safer
-    const bulletsToBeDeleted = [];
     //update state
     for (
-      let i = 0;
-      i <
-      Math.max(
+      let i = Math.max(
         this.shootables.list.length,
         this.boundaries.list.length,
         this.spaceship.bullets.length
       );
-      i++
+      i >= 0;
+      i--
     ) {
       if (i < this.spaceship.bullets.length) {
         const bullet = this.spaceship.bullets[i];
         bullet.update();
 
-        if (bullet.status === 'dead') bulletsToBeDeleted.push(i);
+        if (bullet.status === 'dead') this.spaceship.removeBullet(i);
         else if (bullet.status == 'alive') {
           for (const shootable of this.shootables.list) {
             const collision = shootable.circle
@@ -170,21 +167,21 @@ export default class GameState {
       }
 
       if (i < this.shootables.list.length) {
-        this.shootables.list[i].updatePos();
-        this.shootables.removeElIfDead(i, this.REMOVE_CLASS);
+        this.shootables.list[i].update();
+        if (this.shootables.list[i].lifePoints <= 0)
+          this.shootables.removeEl(i, this.REMOVE_CLASS);
       }
       if (i < this.boundaries.list.length) {
-        this.boundaries.list[i].updatePos();
-        this.boundaries.list[i].recalculateSize();
-        this.boundaries.removeBoundaryIfEmpty(i, this.REMOVE_CLASS);
+        this.boundaries.list[i].update();
+        if (
+          this.boundaries.list[i].height === 0 ||
+          this.boundaries.list[i].el.classList.contains(this.REMOVE_CLASS)
+        )
+          this.boundaries.removeBoundary(i);
       }
       if (i < this.spaceship.bullets.length) {
         this.spaceship.bullets[i].y -= amountToShift;
       }
-    }
-
-    for (const i of bulletsToBeDeleted) {
-      this.spaceship.removeBullet(i);
     }
   }
 }

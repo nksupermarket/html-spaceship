@@ -2,6 +2,7 @@ import { Config, KeysConfig } from '../types/interfaces';
 import Canvas from './classes/Canvas';
 import GameState from './classes/GameState';
 import './style.css';
+import { getTranslateY } from './utils/misc';
 import wrapWords from './wrapWords';
 
 interface ActiveState {
@@ -62,6 +63,7 @@ function getEventHandlers(keysConfig: KeysConfig) {
   return {
     resizeCanvas: () => {
       state.gameState.shootables.list = state.gameState.shootables.getList();
+      state.gameState.boundaries.list = state.gameState.boundaries.getList();
       state.canvas.setCorrectSize();
     },
 
@@ -77,7 +79,7 @@ function getEventHandlers(keysConfig: KeysConfig) {
         state.gameState.keyPress.setTimer(
           'click',
           () => (state.gameState.spaceship.shotAvailable = true),
-          500
+          250
         );
     },
 
@@ -137,8 +139,7 @@ let configHandler = {
   },
 };
 
-export default function run(config?: Config | undefined) {
-  config = config || ({} as Config);
+export default function run(config: Config) {
   const p = new Proxy(config, configHandler) as Required<Config>;
   if (state.active) return;
   if (p.wrapWordsClass) wrapWords(p.wrapWordsClass);
@@ -186,8 +187,12 @@ export default function run(config?: Config | undefined) {
     window.removeEventListener('keydown', deactivate);
 
     document
-      .querySelectorAll(p.removedClass)
-      .forEach((el) => el.classList.remove(p.removedClass));
+      .querySelectorAll(`.${config.removedClass}`)
+      .forEach((el) => el.classList.remove(config.removedClass));
     document.documentElement.style.overflow = 'scroll';
+
+    const translateVal = getTranslateY(this.document.body);
+    document.body.style.transform = `translateY(${0}px)`;
+    window.scrollTo(0, -translateVal + window.scrollY);
   });
 }

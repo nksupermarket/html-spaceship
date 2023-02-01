@@ -33,10 +33,12 @@ export default class Shootable extends Entity {
     this.el.classList.add('shake');
   }
 
-  updatePos() {
-    const { x, y } = this.el.getBoundingClientRect();
+  update() {
+    const { x, y, height, width } = this.el.getBoundingClientRect();
     this.x = x;
     this.y = y;
+    this.height = height;
+    this.width = width;
   }
 
   getCenter(): XY {

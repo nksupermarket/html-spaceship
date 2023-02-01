@@ -89,7 +89,7 @@ export default class Spaceship extends Entity {
 
   constructor({ x, y }: XY, theme?: 'dark' | 'light') {
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
-    this.MAX_SPEED = 12;
+    this.MAX_SPEED = 9;
     this.angle = (90 * Math.PI) / 2;
     this.shotAvailable = true;
     this.decelerateRecord = {
@@ -212,10 +212,10 @@ export default class Spaceship extends Entity {
     for (let i = 0; i < vertices.length; i++) {
       const collideY =
         boundary.y <= vertices[i].y &&
-        boundary.y + boundary.height > vertices[i].y;
+        boundary.y + boundary.height > vertices[i].y + this.velocity.y;
       const collideX =
         boundary.x <= vertices[i].x &&
-        boundary.x + boundary.width > vertices[i].x;
+        boundary.x + boundary.width > vertices[i].x + this.velocity.x;
 
       if (collideY && collideX) {
         // find whether the edge the ship collided with is a horizontal edge or vertical by comparing how deep the ship is on x and y axis. Deeper on x-axis means the ship hit a horizontal edge, deeper on y-axis means the ship hit a vertical edge

@@ -3,5 +3,5 @@ export default class ShootableList {
     list: Shootable[];
     constructor();
     getList(): Shootable[];
-    removeElIfDead(i: number, className: string): void;
+    removeEl(i: number, className: string): void;
 }

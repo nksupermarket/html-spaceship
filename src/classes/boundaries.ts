@@ -12,17 +12,13 @@ export default class Boundary extends Entity {
     this.el = el;
   }
 
-  recalculateSize() {
-    const { height, width } = this.el.getBoundingClientRect();
-    this.height = height;
-    this.width = width;
-  }
-
-  updatePos() {
-    const { x, y } = this.el.getBoundingClientRect();
+  update() {
+    const { x, y, height, width } = this.el.getBoundingClientRect();
 
     this.x = x;
     this.y = y;
+    this.height = height;
+    this.width = width;
   }
 }
 
