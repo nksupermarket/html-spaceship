@@ -1,5 +1,5 @@
 import { Center, MouseInterface, XY } from '../../types/interfaces';
-import { Direction } from '../../types/types';
+import { Axis, Direction } from '../../types/types';
 import { getCollisionBetweenRectAndCircle } from '../utils/checkCollision';
 import { SS_DIMENSIONS } from '../utils/constants';
 import { createImage, getExtremities } from '../utils/misc';
@@ -65,11 +65,22 @@ const drawRoundRect = function (
   }
 };
 
+interface DecelerateAxis {
+  decelerating: boolean;
+  // as time passes, ship should decelerate more rapidly
+  scalar: number;
+}
+
+interface DecelerateRecord {
+  x: DecelerateAxis;
+  y: DecelerateAxis;
+}
+
 export default class Spaceship extends Entity {
   angle: number;
   shotAvailable: boolean;
   bullets: Bullet[];
-  decelerationTime: number;
+  decelerateRecord: DecelerateRecord;
   readonly ACCELERATION_RATE: number;
   accelerating: boolean;
   readonly MAX_SPEED: number;
@@ -78,11 +89,20 @@ export default class Spaceship extends Entity {
 
   constructor({ x, y }: XY, theme?: 'dark' | 'light') {
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
-    this.MAX_SPEED = 10;
+    this.MAX_SPEED = 12;
     this.angle = (90 * Math.PI) / 2;
     this.shotAvailable = true;
-    this.decelerationTime = 0;
-    this.ACCELERATION_RATE = 0.05;
+    this.decelerateRecord = {
+      x: {
+        decelerating: false,
+        scalar: 0,
+      },
+      y: {
+        decelerating: false,
+        scalar: 0,
+      },
+    };
+    this.ACCELERATION_RATE = 0.1;
     this.accelerating = false;
     this.bullets = [];
     this.velocity = { x: 0, y: 0 };
@@ -94,26 +114,33 @@ export default class Spaceship extends Entity {
   }
 
   move(dir: Direction) {
-    this.resetDeceleration();
     switch (dir) {
       case 'left': {
+        this.resetDeceleration('x');
+
         this.velocity.x -= this.ACCELERATION_RATE * this.MAX_SPEED;
         if (this.velocity.x < -this.MAX_SPEED)
           this.velocity.x = -this.MAX_SPEED;
         break;
       }
       case 'right': {
+        this.resetDeceleration('x');
+
         this.velocity.x += this.ACCELERATION_RATE * this.MAX_SPEED;
         if (this.velocity.x > this.MAX_SPEED) this.velocity.x = this.MAX_SPEED;
         break;
       }
       case 'up': {
+        this.resetDeceleration('y');
+
         this.velocity.y -= this.ACCELERATION_RATE * this.MAX_SPEED;
         if (this.velocity.y < -this.MAX_SPEED)
           this.velocity.y = -this.MAX_SPEED;
         break;
       }
       case 'down': {
+        this.resetDeceleration('y');
+
         this.velocity.y += this.ACCELERATION_RATE * this.MAX_SPEED;
         if (this.velocity.y > this.MAX_SPEED) this.velocity.y = this.MAX_SPEED;
         break;
@@ -284,7 +311,9 @@ export default class Spaceship extends Entity {
 
     if (
       this.accelerating ||
-      (this.decelerationTime > 0 && this.decelerationTime < 1)
+      (this.decelerateRecord.x.scalar > 0 &&
+        this.decelerateRecord.x.scalar < 1) ||
+      (this.decelerateRecord.y.scalar > 0 && this.decelerateRecord.y.scalar < 1)
       // want to show flames as ship is decelerating but not after
     ) {
       this.drawFlames(c);
@@ -361,38 +390,30 @@ export default class Spaceship extends Entity {
     this.angle = theta;
   }
 
-  resetDeceleration() {
-    this.decelerationTime = 0;
+  resetDeceleration(axis: Axis) {
+    this.decelerateRecord[axis].decelerating = false;
+    this.decelerateRecord[axis].scalar = 0;
   }
 
   decelerate() {
-    switch (true) {
-      case this.decelerationTime < 0.85:
-        this.decelerationTime += 0.15;
-        break;
-      default:
-        this.decelerationTime += 0.07;
-    }
+    const axisArr = ['x', 'y'] as Axis[];
+    axisArr.forEach((axis: Axis) => {
+      if (this.decelerateRecord[axis].decelerating) return;
+      if (this.decelerateRecord[axis].scalar < 0.85)
+        this.decelerateRecord[axis].scalar += 0.15;
+      else this.decelerateRecord[axis].scalar += 0.07;
 
-    if (this.decelerationTime > 1) {
-      return;
-    }
-    let key: keyof XY;
-    for (key in this.velocity) {
-      this.velocity[key] -=
-        easeInCirc(this.decelerationTime) * this.velocity[key];
-    }
+      if (this.decelerateRecord[axis].scalar > 1) {
+        return;
+      }
+
+      this.velocity[axis] -=
+        easeInCirc(this.decelerateRecord[axis].scalar) * this.velocity[axis];
+    });
   }
 
-  applyInertia() {
-    let key: keyof XY;
-    for (key in this.velocity) {
-      this.velocity[key] /= 3;
-    }
-  }
-
-  removeBullet(id: number) {
-    this.bullets = this.bullets.filter((b) => b.id !== id);
+  removeBullet(i: number) {
+    this.bullets.slice(i, 1);
   }
 
   getVertices(angle = this.angle): XY[] {

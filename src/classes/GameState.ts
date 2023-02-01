@@ -39,13 +39,12 @@ export default class GameState {
     this.spaceship.alignToMouse(this.mouse);
 
     // handle key press
-    let keyPressed = false;
     let dir: Direction;
     for (dir of DIRECTIONS) {
       if (this.keyPress.keys[dir].pressed) {
-        keyPressed = true;
         this.spaceship.move(dir);
-        this.spaceship.resetDeceleration();
+        const axis = dir === 'left' || dir === 'right' ? 'x' : 'y';
+        this.spaceship.resetDeceleration(axis);
       }
     }
     if (this.keyPress.keys.click.pressed) this.spaceship.shoot();
@@ -134,30 +133,11 @@ export default class GameState {
     this.spaceship.updateXPosition();
 
     // handle deceleration
-    if (
-      !keyPressed &&
-      (this.spaceship.velocity.x || this.spaceship.velocity.y) &&
-      this.spaceship.decelerationTime >= 0 &&
-      this.spaceship.decelerationTime <= 1
-    )
+    if (this.spaceship.velocity.x || this.spaceship.velocity.y)
       this.spaceship.decelerate();
 
-    // handle bullets
-    this.spaceship.bullets.forEach((b) => {
-      if (b.status === 'dead') this.spaceship.removeBullet(b.id);
-      b.update();
-      if (b.status !== 'alive') return;
-      this.shootables.list.forEach((shootable) => {
-        const collision = shootable.circle
-          ? checkCollisionBtwnCircles(shootable, b)
-          : checkIfInsideRect(shootable, b);
-        if (collision) {
-          b.onHit();
-          shootable.onHit();
-        }
-      });
-    });
-
+    // .removeBullet() mutates the bullet array so this feels safer
+    const bulletsToBeDeleted = [];
     //update state
     for (
       let i = 0;
@@ -169,6 +149,24 @@ export default class GameState {
       );
       i++
     ) {
+      if (i < this.spaceship.bullets.length) {
+        const bullet = this.spaceship.bullets[i];
+        bullet.update();
+
+        if (bullet.status === 'dead') bulletsToBeDeleted.push(i);
+        else if (bullet.status == 'alive') {
+          for (const shootable of this.shootables.list) {
+            const collision = shootable.circle
+              ? checkCollisionBtwnCircles(shootable, bullet)
+              : checkIfInsideRect(shootable, bullet);
+            if (collision) {
+              bullet.onHit();
+              shootable.onHit();
+            }
+          }
+        }
+      }
+
       if (i < this.shootables.list.length) {
         this.shootables.list[i].updatePos();
         this.shootables.removeElIfDead(i);
@@ -181,6 +179,10 @@ export default class GameState {
       if (i < this.spaceship.bullets.length) {
         this.spaceship.bullets[i].y -= amountToShift;
       }
+    }
+
+    for (const i of bulletsToBeDeleted) {
+      this.spaceship.removeBullet(i);
     }
   }
 }

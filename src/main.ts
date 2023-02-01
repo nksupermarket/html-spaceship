@@ -150,6 +150,10 @@ export default function run(config?: Config | undefined) {
   proxy.gameState = new GameState(p.theme);
   const eventHandlers = getEventHandlers(p.keys)!;
 
+  function preventDefault(e: Event) {
+    e.preventDefault();
+  }
+
   window.addEventListener('resize', eventHandlers.resizeCanvas);
 
   window.addEventListener('mousemove', eventHandlers.changeAimPos);
@@ -158,6 +162,8 @@ export default function run(config?: Config | undefined) {
 
   window.addEventListener('keydown', eventHandlers.handleKeyPress);
   window.addEventListener('keyup', eventHandlers.handleKeyUp);
+
+  window.addEventListener('contextmenu', preventDefault);
 
   animate();
 

@@ -14,12 +14,6 @@ export default class BoundaryList {
     });
   }
 
-  removeEmptyBoundaries() {
-    this.list = this.list.filter((b) => {
-      return b.height && !b.el.classList.contains('removed');
-    });
-  }
-
   removeBoundaryIfEmpty(i: number) {
     if (
       this.list[i].height === 0 ||
@@ -27,13 +21,5 @@ export default class BoundaryList {
     ) {
       this.list.splice(i, 1);
     }
-  }
-
-  updatePositions() {
-    this.list.forEach((b) => b.updatePos());
-  }
-
-  updateSizes() {
-    this.list.forEach((b) => b.recalculateSize());
   }
 }
