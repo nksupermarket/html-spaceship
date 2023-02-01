@@ -170,6 +170,7 @@ export default function run(config: Config) {
 
   window.addEventListener('keydown', function deactivate(e) {
     if (e.key != p.keys.deactivate) return;
+    e.preventDefault();
 
     proxy.canvas?.remove();
     state.active = false;

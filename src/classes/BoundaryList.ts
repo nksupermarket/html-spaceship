@@ -17,7 +17,7 @@ export default class BoundaryList {
     );
   }
 
-  removeBoundary(i: number) {
+  removeBoundary(i: number,) {
     this.list.splice(i, 1);
   }
 }

@@ -65,52 +65,46 @@ const drawRoundRect = function (
   }
 };
 
-interface DecelerateAxis {
-  decelerating: boolean;
-  // as time passes, ship should decelerate more rapidly
-  scalar: number;
-}
-
-interface DecelerateRecord {
-  x: DecelerateAxis;
-  y: DecelerateAxis;
-}
+type DecelerateScalars = Record<Axis, number>;
 
 export default class Spaceship extends Entity {
   angle: number;
   shotAvailable: boolean;
   bullets: Bullet[];
-  decelerateRecord: DecelerateRecord;
+  decelerateScalars: DecelerateScalars;
   readonly ACCELERATION_RATE: number;
   accelerating: boolean;
   readonly MAX_SPEED: number;
   velocity: XY;
   readonly IMAGE: HTMLImageElement;
+  verticesCache: XY[] | null;
 
   constructor({ x, y }: XY, theme?: 'dark' | 'light') {
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
     this.MAX_SPEED = 9;
     this.angle = (90 * Math.PI) / 2;
     this.shotAvailable = true;
-    this.decelerateRecord = {
-      x: {
-        decelerating: false,
-        scalar: 0,
-      },
-      y: {
-        decelerating: false,
-        scalar: 0,
-      },
+    this.decelerateScalars = {
+      x: 0,
+      y: 0,
     };
     this.ACCELERATION_RATE = 0.1;
     this.accelerating = false;
     this.bullets = [];
     this.velocity = { x: 0, y: 0 };
+    this.verticesCache = null;
     this.IMAGE = createImage(
       theme === 'light'
         ? require('../assets/optimized/rocket-lightmode.png').default
         : require('../assets/optimized/rocket-darkmode.png').default
     );
+  }
+
+  get vertices() {
+    if (!this.verticesCache) {
+      this.verticesCache = this.getVertices();
+    }
+    return this.verticesCache;
   }
 
   move(dir: Direction) {
@@ -149,7 +143,7 @@ export default class Spaceship extends Entity {
   }
 
   handleBoundsCollision(bounds: XY) {
-    const extremities = getExtremities(this.getVertices());
+    const extremities = getExtremities(this.vertices);
 
     for (const [key, value] of Object.entries(extremities)) {
       switch (key) {
@@ -189,7 +183,7 @@ export default class Spaceship extends Entity {
     const collision = getCollisionBetweenRectAndCircle(
       boundary.getCenter(),
       boundary.radius,
-      this.getVertices()
+      this.vertices
     );
     if (!collision) return;
     const { correction, normal } = collision;
@@ -206,26 +200,24 @@ export default class Spaceship extends Entity {
   }
 
   handleCollisionWithRect(boundary: RectBoundary) {
-    const vertices = this.getVertices();
-
     let collision = null;
-    for (let i = 0; i < vertices.length; i++) {
+    for (let i = 0; i < this.vertices.length; i++) {
       const collideY =
-        boundary.y <= vertices[i].y &&
-        boundary.y + boundary.height > vertices[i].y + this.velocity.y;
+        boundary.y <= this.vertices[i].y &&
+        boundary.y + boundary.height > this.vertices[i].y;
       const collideX =
-        boundary.x <= vertices[i].x &&
-        boundary.x + boundary.width > vertices[i].x + this.velocity.x;
+        boundary.x <= this.vertices[i].x &&
+        boundary.x + boundary.width > this.vertices[i].x;
 
       if (collideY && collideX) {
         // find whether the edge the ship collided with is a horizontal edge or vertical by comparing how deep the ship is on x and y axis. Deeper on x-axis means the ship hit a horizontal edge, deeper on y-axis means the ship hit a vertical edge
         const sizeOfYPenetration = Math.min(
-          vertices[i].y - boundary.y,
-          boundary.y + boundary.height - vertices[i].y
+          this.vertices[i].y - boundary.y,
+          boundary.y + boundary.height - this.vertices[i].y
         );
         const sizeOfXPenetration = Math.min(
-          vertices[i].x - boundary.x,
-          boundary.x + boundary.width - vertices[i].x
+          this.vertices[i].x - boundary.x,
+          boundary.x + boundary.width - this.vertices[i].x
         );
         collision =
           sizeOfYPenetration > sizeOfXPenetration
@@ -290,9 +282,9 @@ export default class Spaceship extends Entity {
     this.shotAvailable = false;
   }
 
-  getCenter(withVelocity?: 'with velocity'): Center {
-    const x = withVelocity ? this.x + this.velocity.x : this.x;
-    const y = withVelocity ? this.y + this.velocity.y : this.y;
+  getCenter(): Center {
+    const x = this.x;
+    const y = this.y;
 
     const xCenter = x + this.width / 2;
     const yCenter = y + this.height / 2;
@@ -311,9 +303,8 @@ export default class Spaceship extends Entity {
 
     if (
       this.accelerating ||
-      (this.decelerateRecord.x.scalar > 0 &&
-        this.decelerateRecord.x.scalar < 1) ||
-      (this.decelerateRecord.y.scalar > 0 && this.decelerateRecord.y.scalar < 1)
+      (this.decelerateScalars.x > 0 && this.decelerateScalars.x < 1) ||
+      (this.decelerateScalars.y > 0 && this.decelerateScalars.y < 1)
       // want to show flames as ship is decelerating but not after
     ) {
       this.drawFlames(c);
@@ -391,25 +382,22 @@ export default class Spaceship extends Entity {
   }
 
   resetDeceleration(axis: Axis) {
-    this.decelerateRecord[axis].decelerating = false;
-    this.decelerateRecord[axis].scalar = 0;
+    this.decelerateScalars[axis] = 0;
   }
 
-  decelerate() {
-    const axisArr = ['x', 'y'] as Axis[];
-    axisArr.forEach((axis: Axis) => {
-      if (this.decelerateRecord[axis].decelerating) return;
-      if (this.decelerateRecord[axis].scalar < 0.85)
-        this.decelerateRecord[axis].scalar += 0.15;
-      else this.decelerateRecord[axis].scalar += 0.07;
+  decelerate(axis: Axis) {
+    if (axis === 'y') console.log(this.decelerateScalars[axis]);
+    if (this.decelerateScalars[axis] > 0.92) {
+      return;
+    }
+    if (this.decelerateScalars[axis] < 0.92)
+      this.decelerateScalars[axis] += 0.05;
+    if (this.decelerateScalars[axis] > 0.92) {
+      return;
+    }
 
-      if (this.decelerateRecord[axis].scalar > 1) {
-        return;
-      }
-
-      this.velocity[axis] -=
-        easeInCirc(this.decelerateRecord[axis].scalar) * this.velocity[axis];
-    });
+    this.velocity[axis] -=
+      easeInCirc(this.decelerateScalars[axis]) * this.velocity[axis];
   }
 
   removeBullet(i: number) {

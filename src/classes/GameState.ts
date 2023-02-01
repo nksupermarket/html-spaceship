@@ -39,20 +39,23 @@ export default class GameState {
 
   update() {
     this.spaceship.alignToMouse(this.mouse);
-
     // handle key press
     let dir: Direction;
+    let xAxisPressed = 0;
+    let yAxisPressed = 0;
     for (dir of DIRECTIONS) {
       if (this.keyPress.keys[dir].pressed) {
         this.spaceship.move(dir);
-        const axis = dir === 'left' || dir === 'right' ? 'x' : 'y';
-        this.spaceship.resetDeceleration(axis);
+        if (dir === 'right' || dir === 'left') xAxisPressed++;
+        else yAxisPressed++;
       }
     }
+    if (!yAxisPressed) this.spaceship.decelerate('y');
+    if (!xAxisPressed) this.spaceship.decelerate('x');
+
     if (this.keyPress.keys.click.pressed) this.spaceship.shoot();
 
     // handle scroll
-
     const distanceFromTopOfDocumentToLastScreen = Math.floor(
       document.documentElement.scrollHeight -
         window.innerHeight -
@@ -134,10 +137,6 @@ export default class GameState {
 
     this.spaceship.updateXPosition();
 
-    // handle deceleration
-    if (this.spaceship.velocity.x || this.spaceship.velocity.y)
-      this.spaceship.decelerate();
-
     //update state
     for (
       let i = Math.max(
@@ -173,15 +172,14 @@ export default class GameState {
       }
       if (i < this.boundaries.list.length) {
         this.boundaries.list[i].update();
-        if (
-          this.boundaries.list[i].height === 0 ||
-          this.boundaries.list[i].el.classList.contains(this.REMOVE_CLASS)
-        )
+        if (this.boundaries.list[i].el.classList.contains(this.REMOVE_CLASS))
           this.boundaries.removeBoundary(i);
       }
       if (i < this.spaceship.bullets.length) {
         this.spaceship.bullets[i].y -= amountToShift;
       }
     }
+
+    this.spaceship.verticesCache = null;
   }
 }
