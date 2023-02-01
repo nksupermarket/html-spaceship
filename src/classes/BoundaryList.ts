@@ -20,6 +20,15 @@ export default class BoundaryList {
     });
   }
 
+  removeBoundaryIfEmpty(i: number) {
+    if (
+      this.list[i].height === 0 ||
+      this.list[i].el.classList.contains('removed')
+    ) {
+      this.list.splice(i, 1);
+    }
+  }
+
   updatePositions() {
     this.list.forEach((b) => b.updatePos());
   }

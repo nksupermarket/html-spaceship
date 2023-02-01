@@ -77,8 +77,6 @@ export default class Spaceship extends Entity {
   readonly IMAGE: HTMLImageElement;
 
   constructor({ x, y }: XY, theme?: 'dark' | 'light') {
-    theme = theme || 'light';
-    console.log(theme);
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
     this.MAX_SPEED = 10;
     this.angle = (90 * Math.PI) / 2;
@@ -357,7 +355,7 @@ export default class Spaceship extends Entity {
 
     const dx = mouse.x - xCenter;
     const dy = mouse.y - yCenter;
-    // subtract 90deg so that spaceship nose faces mouse
+    // subtract 90deg bc the ship starts at 90deg
     const theta = Math.atan2(dy, dx) - Math.PI / 2;
 
     this.angle = theta;

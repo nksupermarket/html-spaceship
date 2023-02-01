@@ -49,7 +49,6 @@ export default class Vector {
     const magnitude = this.getMagnitude();
     this.x /= magnitude;
     this.y /= magnitude;
-    console.log(this.x, this.y);
     return this;
   }
 

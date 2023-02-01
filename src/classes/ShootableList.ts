@@ -20,13 +20,10 @@ export default class ShootableList {
     this.list.forEach((se) => se.updatePos());
   }
 
-  removeDeadEls() {
-    this.list = this.list.filter((se) => {
-      if (se.lifePoints <= 0) {
-        se.removeEl();
-      }
-
-      return se.lifePoints > 0;
-    });
+  removeElIfDead(i: number) {
+    if (this.list[i].lifePoints <= 0) {
+      this.list[i].removeEl();
+      this.list.splice(i, 1);
+    }
   }
 }
