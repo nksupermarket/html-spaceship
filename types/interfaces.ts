@@ -37,4 +37,5 @@ export interface Config {
   removedClass: string;
   onRemove?: () => void;
   speed?: number;
+  rootEl?: HTMLElement;
 }

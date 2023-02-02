@@ -138,6 +138,9 @@ let configHandler = {
       case 'speed': {
         return target[name] || 10;
       }
+      case 'rootEl': {
+        return target[name] || document.body;
+      }
       default: {
         return target[name];
       }
@@ -154,7 +157,12 @@ export default function run(config: Config) {
   const proxy = state as unknown as ActiveState;
   proxy.active = true;
   proxy.canvas = new Canvas();
-  proxy.gameState = new GameState(config.removedClass, p.theme, p.speed);
+  proxy.gameState = new GameState(
+    config.removedClass,
+    p.theme,
+    p.speed,
+    p.rootEl
+  );
   const eventHandlers = getEventHandlers(p.keys)!;
 
   function preventDefault(e: Event) {

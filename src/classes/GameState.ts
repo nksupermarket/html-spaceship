@@ -19,8 +19,14 @@ export default class GameState {
   keyPress: KeyPress;
   scrollBoundary: { top: number; bottom: number };
   readonly REMOVE_CLASS: string;
+  readonly ROOT_EL: HTMLElement;
 
-  constructor(removeClass: string, theme: 'light' | 'dark', speed: number) {
+  constructor(
+    removeClass: string,
+    theme: 'light' | 'dark',
+    speed: number,
+    rootEl: HTMLElement
+  ) {
     this.scrollBoundary = {
       // local minima/maxima that triggers a scroll upon contact
       top: window.innerHeight * 0.3,
@@ -39,6 +45,7 @@ export default class GameState {
       y: null,
     };
     this.REMOVE_CLASS = removeClass;
+    this.ROOT_EL = rootEl;
   }
 
   update() {
@@ -65,7 +72,7 @@ export default class GameState {
         window.innerHeight -
         window.scrollY
     );
-    const translateVal = getTranslateY(document.body);
+    const translateVal = getTranslateY(this.ROOT_EL);
     const distanceTraveled = Math.floor(translateVal * -1);
 
     const inBetweenScrollBoundaries =
@@ -85,7 +92,7 @@ export default class GameState {
       this.spaceship.velocity.y > 0;
 
     let amountToShift = 0;
-    // bullets need to read this amount to see how much to shift as body translateY changes
+    // bullets need to read this amount to see how much to shift as the root element translateY changes
     if (
       inBetweenScrollBoundaries ||
       inFirstScreenGoingUp ||
@@ -103,15 +110,14 @@ export default class GameState {
         //if spaceship is above the last page
         Math.abs(newTranslateVal) < distanceFromTopOfDocumentToLastScreen
       ) {
-        document.body.style.transform = `translateY(${newTranslateVal}px)`;
+        this.ROOT_EL.style.transform = `translateY(${newTranslateVal}px)`;
         amountToShift = this.spaceship.velocity.y;
       } else {
-        // need to set the translate value of body to distanceFromTopOfDocumentToLastScreen bc that's what we read to see if the spaceship can cross the bottom scrollBoundary
-        document.body.style.transform = `translateY(${-distanceFromTopOfDocumentToLastScreen}px)`;
+        // need to set the translate value of root element to distanceFromTopOfDocumentToLastScreen bc that's what we read to see if the spaceship can cross the bottom scrollBoundary
+        this.ROOT_EL.style.transform = `translateY(${-distanceFromTopOfDocumentToLastScreen}px)`;
 
         amountToShift =
-          distanceFromTopOfDocumentToLastScreen -
-          Math.abs(getTranslateY(document.body));
+          distanceFromTopOfDocumentToLastScreen - Math.abs(translateVal);
       }
     } else if (
       //spaceship is going to push against top scrollBoundary
@@ -120,13 +126,13 @@ export default class GameState {
     ) {
       const newTranslateVal = translateVal - this.spaceship.velocity.y;
       if (newTranslateVal < window.scrollY) {
-        document.body.style.transform = `translateY(${newTranslateVal}px)`;
+        this.ROOT_EL.style.transform = `translateY(${newTranslateVal}px)`;
 
         amountToShift = this.spaceship.velocity.y;
       } else {
-        document.body.style.transform = `translateY(${window.scrollY}px)`;
+        this.ROOT_EL.style.transform = `translateY(${window.scrollY}px)`;
 
-        amountToShift = Math.abs(getTranslateY(document.body));
+        amountToShift = Math.abs(translateVal);
       }
     } else if (belowBottomBoundGoingUp || aboveTopBoundGoingDown) {
       this.spaceship.updateYPosition();
