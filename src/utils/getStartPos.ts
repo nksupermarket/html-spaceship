@@ -14,13 +14,13 @@ export default function getStartPos(boundaries: Boundary[]) {
     };
   }
 
-  let spaceship = new Spaceship(getRdmPos());
+  let spaceship = new Spaceship(getRdmPos(), 'light', 10);
 
   let inEmptySpace = false;
   while (!inEmptySpace) {
     for (let i = 0; i < boundaries.length; i++) {
       if (checkIfInsideRect(spaceship, boundaries[i])) {
-        spaceship = new Spaceship(getRdmPos());
+        spaceship = new Spaceship(getRdmPos(), 'light', 10);
         continue;
       }
     }

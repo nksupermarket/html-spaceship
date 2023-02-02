@@ -14,6 +14,6 @@ export default class GameState {
         bottom: number;
     };
     readonly REMOVE_CLASS: string;
-    constructor(removeClass: string, theme: 'light' | 'dark');
+    constructor(removeClass: string, theme: 'light' | 'dark', speed: number);
     update(): void;
 }

@@ -35,4 +35,6 @@ export interface Config {
   wrapWordsClass?: string;
   theme?: 'dark' | 'light';
   removedClass: string;
+  onRemove?: () => void;
+  speed?: number;
 }

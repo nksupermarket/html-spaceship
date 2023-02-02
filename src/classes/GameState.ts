@@ -20,14 +20,18 @@ export default class GameState {
   scrollBoundary: { top: number; bottom: number };
   readonly REMOVE_CLASS: string;
 
-  constructor(removeClass: string, theme: 'light' | 'dark') {
+  constructor(removeClass: string, theme: 'light' | 'dark', speed: number) {
     this.scrollBoundary = {
       // local minima/maxima that triggers a scroll upon contact
       top: window.innerHeight * 0.3,
       bottom: window.innerHeight * 0.7,
     };
     this.boundaries = new BoundaryList();
-    this.spaceship = new Spaceship(getStartPos(this.boundaries.list), theme);
+    this.spaceship = new Spaceship(
+      getStartPos(this.boundaries.list),
+      theme,
+      speed
+    );
     this.shootables = new ShootableList();
     this.keyPress = new KeyPress();
     this.mouse = {
@@ -41,13 +45,13 @@ export default class GameState {
     this.spaceship.alignToMouse(this.mouse);
     // handle key press
     let dir: Direction;
-    let xAxisPressed = 0;
-    let yAxisPressed = 0;
+    let xAxisPressed = false;
+    let yAxisPressed = false;
     for (dir of DIRECTIONS) {
       if (this.keyPress.keys[dir].pressed) {
         this.spaceship.move(dir);
-        if (dir === 'right' || dir === 'left') xAxisPressed++;
-        else yAxisPressed++;
+        if (dir === 'right' || dir === 'left') xAxisPressed = true;
+        else yAxisPressed = true;
       }
     }
     if (!yAxisPressed) this.spaceship.decelerate('y');
@@ -128,12 +132,10 @@ export default class GameState {
       this.spaceship.updateYPosition();
     }
 
-    // handle spaceship running into boundaries
     this.spaceship.handleBoundsCollision({
       x: window.innerWidth,
       y: window.innerHeight,
     });
-    this.spaceship.handleBoundaryCollision(this.boundaries.list);
 
     this.spaceship.updateXPosition();
 
@@ -171,15 +173,20 @@ export default class GameState {
           this.shootables.removeEl(i, this.REMOVE_CLASS);
       }
       if (i < this.boundaries.list.length) {
-        this.boundaries.list[i].update();
-        if (this.boundaries.list[i].el.classList.contains(this.REMOVE_CLASS))
+        const boundary = this.boundaries.list[i];
+
+        if (boundary.kind === 'circle')
+          this.spaceship.handleCollisionWithCircle(boundary);
+        else this.spaceship.handleCollisionWithRect(boundary);
+
+        boundary.update();
+        if (boundary.el.classList.contains(this.REMOVE_CLASS))
           this.boundaries.removeBoundary(i);
       }
+
       if (i < this.spaceship.bullets.length) {
         this.spaceship.bullets[i].y -= amountToShift;
       }
     }
-
-    this.spaceship.verticesCache = null;
   }
 }

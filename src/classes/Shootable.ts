@@ -2,7 +2,7 @@ import { XY } from '../../types/interfaces';
 import Entity from './Entity';
 
 export default class Shootable extends Entity {
-  lifePoints: number = 30;
+  lifePoints: number = 50;
   el: HTMLElement;
   circle: boolean;
 

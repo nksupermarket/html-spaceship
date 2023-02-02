@@ -124,7 +124,7 @@ let keysConfigHandler = {
 };
 
 let configHandler = {
-  get: function (target: Config, name: string) {
+  get: function (target: Config, name: keyof Config) {
     switch (name) {
       case 'keys': {
         return target[name] || new Proxy({} as KeysConfig, keysConfigHandler);
@@ -134,6 +134,12 @@ let configHandler = {
       }
       case 'theme': {
         return target[name] || 'light';
+      }
+      case 'speed': {
+        return target[name] || 10;
+      }
+      default: {
+        return target[name];
       }
     }
   },
@@ -148,7 +154,7 @@ export default function run(config: Config) {
   const proxy = state as unknown as ActiveState;
   proxy.active = true;
   proxy.canvas = new Canvas();
-  proxy.gameState = new GameState(config.removedClass, p.theme);
+  proxy.gameState = new GameState(config.removedClass, p.theme, p.speed);
   const eventHandlers = getEventHandlers(p.keys)!;
 
   function preventDefault(e: Event) {
@@ -193,7 +199,9 @@ export default function run(config: Config) {
     document.documentElement.style.overflow = 'scroll';
 
     const translateVal = getTranslateY(this.document.body);
-    document.body.style.transform = `translateY(${0}px)`;
+    document.body.style.transform = '';
     window.scrollTo(0, -translateVal + window.scrollY);
+
+    config.onRemove && config.onRemove();
   });
 }

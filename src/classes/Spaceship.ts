@@ -77,11 +77,10 @@ export default class Spaceship extends Entity {
   readonly MAX_SPEED: number;
   velocity: XY;
   readonly IMAGE: HTMLImageElement;
-  verticesCache: XY[] | null;
 
-  constructor({ x, y }: XY, theme?: 'dark' | 'light') {
+  constructor({ x, y }: XY, theme: 'dark' | 'light', speed: number) {
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
-    this.MAX_SPEED = 9;
+    this.MAX_SPEED = speed;
     this.angle = (90 * Math.PI) / 2;
     this.shotAvailable = true;
     this.decelerateScalars = {
@@ -92,7 +91,6 @@ export default class Spaceship extends Entity {
     this.accelerating = false;
     this.bullets = [];
     this.velocity = { x: 0, y: 0 };
-    this.verticesCache = null;
     this.IMAGE = createImage(
       theme === 'light'
         ? require('../assets/optimized/rocket-lightmode.png').default
@@ -101,10 +99,7 @@ export default class Spaceship extends Entity {
   }
 
   get vertices() {
-    if (!this.verticesCache) {
-      this.verticesCache = this.getVertices();
-    }
-    return this.verticesCache;
+    return this.getVertices();
   }
 
   move(dir: Direction) {
@@ -186,6 +181,7 @@ export default class Spaceship extends Entity {
       this.vertices
     );
     if (!collision) return;
+
     const { correction, normal } = collision;
 
     this.updateXPosition(correction.x);
@@ -250,16 +246,6 @@ export default class Spaceship extends Entity {
       default:
         return;
     }
-  }
-
-  handleBoundaryCollision(boundaries: (CircleBoundary | RectBoundary)[]) {
-    boundaries.forEach((boundary) => {
-      if (boundary.kind === 'circle') {
-        this.handleCollisionWithCircle(boundary);
-      } else if (boundary.kind === 'rect') {
-        this.handleCollisionWithRect(boundary);
-      }
-    });
   }
 
   updateXPosition(shift = this.velocity.x) {
@@ -386,15 +372,11 @@ export default class Spaceship extends Entity {
   }
 
   decelerate(axis: Axis) {
-    if (axis === 'y') console.log(this.decelerateScalars[axis]);
     if (this.decelerateScalars[axis] > 0.92) {
       return;
     }
     if (this.decelerateScalars[axis] < 0.92)
       this.decelerateScalars[axis] += 0.05;
-    if (this.decelerateScalars[axis] > 0.92) {
-      return;
-    }
 
     this.velocity[axis] -=
       easeInCirc(this.decelerateScalars[axis]) * this.velocity[axis];
