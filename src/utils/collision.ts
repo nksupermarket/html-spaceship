@@ -1,8 +1,7 @@
 import { XY } from '../../types/interfaces';
-import { RectBoundary } from '../classes/boundaries';
+import { CircleBoundary } from '../classes/boundaries';
 import Bullet from '../classes/Bullet';
 import Entity from '../classes/Entity';
-import Polygon from '../classes/Polygon';
 import Shootable from '../classes/Shootable';
 import Vector from '../classes/Vector';
 import { distBtwnTwoPoints, getClosestPoint, sqr } from './math';
@@ -17,34 +16,6 @@ export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
     rectTwo.x <= rectOne.x + rectOne.width;
 
   return insideX && insideY;
-}
-
-export function getCollisionBetweenRectAndCircle(
-  centerOfCircle: XY,
-  r: number,
-  rectVertices: XY[]
-) {
-  const closestVertex = getClosestPoint(centerOfCircle, rectVertices);
-  const shortestDist = distBtwnTwoPoints(centerOfCircle, closestVertex);
-  if (shortestDist > r) return null;
-  const theta = Math.atan2(
-    closestVertex.y - centerOfCircle.y,
-    closestVertex.x - centerOfCircle.x
-  );
-  const xDiff = r * Math.cos(theta);
-  const yDiff = r * Math.sin(theta);
-
-  const pointOfCollision = {
-    x: centerOfCircle.x + xDiff,
-    y: centerOfCircle.y + yDiff,
-  };
-  return {
-    normal: new Vector(xDiff, yDiff),
-    correction: {
-      x: pointOfCollision.x - closestVertex.x,
-      y: pointOfCollision.y - closestVertex.y,
-    },
-  };
 }
 
 export function checkCollisionBtwnCircles(
@@ -68,19 +39,19 @@ function getNormals(vertices: XY[]) {
       vertices[i],
       vertices[(i + 1) % vertices.length]
     ).toRightNormal();
-    vector.normalize();
     normals.push(vector);
   }
   return normals;
 }
 
-function projectOntoNormal(vertices: XY[], normal: Vector) {
+function projectPolygon(vertices: XY[], vector: Vector) {
+  const v = Vector.fromVector(vector).normalize();
   let min = Infinity;
   let max = -Infinity;
   for (let i = 0; i < vertices.length; i++) {
-    const dp = normal.getDotProduct(vertices[i]);
-    min = Math.min(dp, min);
-    max = Math.max(dp, max);
+    const dot = v.dot(vertices[i]);
+    min = Math.min(dot, min);
+    max = Math.max(dot, max);
   }
 
   return { min, max };
@@ -91,33 +62,104 @@ interface MockPolygon {
   center: XY;
 }
 
-export function checkCollisionBtwnPolygons(p1: MockPolygon, p2: MockPolygon) {
+export function getCollisionBtwnPolygons(p: MockPolygon, p2: MockPolygon) {
   let overlap = Infinity;
-  let collisionNormal;
+  let collisionNormal = new Vector(0, 0);
 
-  const p1Normals = getNormals(p1.vertices);
+  const pNormals = getNormals(p.vertices);
   const p2Normals = getNormals(p2.vertices);
-  const allNormals = p1Normals.concat(p2Normals);
+  const allNormals = p2Normals.concat(pNormals);
 
   for (const normal of allNormals) {
-    const p1_1d = projectOntoNormal(p1.vertices, normal);
-    const p2_1d = projectOntoNormal(p2.vertices, normal);
+    const pProj = projectPolygon(p.vertices, normal);
+    const p2Proj = projectPolygon(p2.vertices, normal);
 
     const prevOverlap = overlap;
     overlap = Math.min(
-      Math.min(p1_1d.max, p2_1d.max) - Math.max(p1_1d.min, p2_1d.min),
+      Math.min(pProj.max, p2Proj.max) - Math.max(pProj.min, p2Proj.min),
       overlap
     );
     if (overlap != prevOverlap) collisionNormal = normal;
 
-    if (!(p2_1d.max > p1_1d.min && p1_1d.max > p2_1d.min)) return null;
+    if (p2Proj.max < pProj.min || pProj.max < p2Proj.min) return null;
   }
 
-  const displacementVector = Vector.fromPoints(p2.center, p1.center);
-  const magnitude = displacementVector.getMagnitude();
-  const displacement = {
-    x: (overlap * displacementVector.x) / magnitude,
-    y: (overlap * displacementVector.y) / magnitude,
+  const displacementVector = Vector.fromPoints(p.center, p2.center);
+  displacementVector.normalize();
+  return {
+    displacement: displacementVector.multiply(overlap),
+    collisionNormal,
   };
-  return { displacement, collisionNormal };
+}
+
+type MockCircle = {
+  radius: number;
+  center: XY;
+};
+
+function projectCircle(c: MockCircle, vector: Vector) {
+  const direction = Vector.fromVector(vector).normalize();
+  direction.multiply(c.radius);
+
+  const p1 = {
+    x: c.center.x + direction.x,
+    y: c.center.y + direction.y,
+  };
+  const p2 = {
+    x: c.center.x - direction.x,
+    y: c.center.y - direction.y,
+  };
+  direction.normalize();
+  let min = direction.dot(p1);
+  let max = direction.dot(p2);
+  if (min > max) {
+    const tmp = min;
+    min = max;
+    max = tmp;
+  }
+  return { min, max };
+}
+
+export function getCollisionBtwnPolygonAndCircle(
+  p: MockPolygon,
+  c: CircleBoundary
+) {
+  let overlap = Infinity;
+  let collisionNormal = new Vector(0, 0);
+
+  const pNormals = getNormals(p.vertices);
+  for (const normal of pNormals) {
+    const pProj = projectPolygon(p.vertices, normal);
+    const cProj = projectCircle(c, normal);
+
+    if (cProj.max < pProj.min || pProj.max < cProj.min) return null;
+
+    const prevOverlap = overlap;
+    overlap = Math.min(
+      Math.min(pProj.max, cProj.max) - Math.max(pProj.min, cProj.min),
+      overlap
+    );
+    if (overlap != prevOverlap) collisionNormal = normal;
+  }
+
+  // see if closest point on polygon intersects circle
+  const closestPoint = getClosestPoint(c.center, p.vertices);
+  const axis = Vector.fromPoints(c.center, closestPoint);
+  const pProj = projectPolygon(p.vertices, axis);
+  const cProj = projectCircle(c, axis);
+  if (cProj.max < pProj.min || pProj.max < cProj.min) return null;
+
+  const prevOverlap = overlap;
+  overlap = Math.min(
+    Math.min(pProj.max, cProj.max) - Math.max(pProj.min, cProj.min),
+    overlap
+  );
+  if (overlap != prevOverlap) collisionNormal = axis;
+
+  const displacementVector = Vector.fromPoints(c.center, p.center);
+  displacementVector.normalize();
+  return {
+    displacement: displacementVector.multiply(overlap),
+    collisionNormal,
+  };
 }

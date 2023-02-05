@@ -1,3 +1,4 @@
+import { Mouse } from '../../types/types';
 import BoundaryList from './BoundaryList';
 import Spaceship from './Spaceship';
 
@@ -16,7 +17,7 @@ export default class Canvas {
     this.el.width = window.innerWidth;
   }
 
-  draw(spaceship: Spaceship, boundaries: BoundaryList) {
+  draw(spaceship: Spaceship) {
     const c = this.el.getContext('2d');
     if (!c) return;
 
@@ -24,10 +25,6 @@ export default class Canvas {
 
     spaceship.bullets.forEach((b) => b.draw(c));
     spaceship.draw(c);
-
-    for (const boundary of boundaries.list) {
-      boundary.draw(c);
-    }
   }
 
   remove() {

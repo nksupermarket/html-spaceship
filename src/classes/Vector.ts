@@ -17,7 +17,7 @@ export default class Vector {
     return new Vector(vector.x, vector.y);
   }
 
-  getDotProduct(v2: XY) {
+  dot(v2: XY) {
     return v2.x * this.x + v2.y * this.y;
   }
 
@@ -47,6 +47,7 @@ export default class Vector {
 
   normalize() {
     const magnitude = this.getMagnitude();
+    if (magnitude > 0.99 && magnitude < 1.01) return this;
     this.x /= magnitude;
     this.y /= magnitude;
     return this;

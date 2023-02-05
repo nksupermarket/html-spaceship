@@ -21,11 +21,6 @@ export default class Boundary extends Entity {
     this.width = width;
     this.center = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
   }
-
-  draw(c: CanvasRenderingContext2D) {
-    c.strokeRect(this.x, this.y, this.width, this.height);
-    c.fillRect(this.center.x, this.center.y, 10, 10);
-  }
 }
 
 export class CircleBoundary extends Boundary {
@@ -55,12 +50,12 @@ export class RectBoundary extends Boundary {
         y: this.y,
       },
       {
-        x: this.x,
+        x: this.x + this.width,
         y: this.y + this.height,
       },
       {
-        x: this.x + this.width,
-        y: this.y + this.width,
+        x: this.x,
+        y: this.y + this.height,
       },
     ];
   }
@@ -82,12 +77,13 @@ export class RectBoundary extends Boundary {
         x: this.x + this.width,
         y: this.y,
       },
+
       {
-        x: this.x,
+        x: this.x + this.width,
         y: this.y + this.height,
       },
       {
-        x: this.x + this.width,
+        x: this.x,
         y: this.y + this.height,
       },
     ];

@@ -1,8 +1,8 @@
 import { MouseInterface, XY } from '../../types/interfaces';
 import { Axis, Direction } from '../../types/types';
 import {
-  checkCollisionBtwnPolygons,
-  getCollisionBetweenRectAndCircle,
+  getCollisionBtwnPolygonAndCircle,
+  getCollisionBtwnPolygons,
 } from '../utils/collision';
 import { SS_DIMENSIONS } from '../utils/constants';
 import { createImage, getExtremities } from '../utils/misc';
@@ -203,24 +203,28 @@ export default class Spaceship extends Entity {
   }
 
   handleCollisionWithCircle(boundary: CircleBoundary) {
-    const collision = getCollisionBetweenRectAndCircle(
-      boundary.center,
-      boundary.radius,
-      this.BOUNDING_BOX.vertices
-    );
+    if (
+      this.x + 200 < boundary.x ||
+      this.x > boundary.x + boundary.width + 200 ||
+      this.y + 200 < boundary.y ||
+      this.y > boundary.y + boundary.height + 200
+    )
+      return;
+    let collision;
+    for (const polygon of this.CONVEX_POLYGONS) {
+      collision = getCollisionBtwnPolygonAndCircle(polygon, boundary);
+      if (collision) break;
+    }
     if (!collision) return;
-
-    const { correction, normal } = collision;
-
-    this.updateXPosition(correction.x);
-    this.updateYPosition(correction.y);
-
+    const { displacement, collisionNormal } = collision;
+    this.updateXPosition(displacement.x);
+    this.updateYPosition(displacement.y);
     // explanation of how collision is resolved https://stackoverflow.com/a/4523556/6815335
-    normal.normalize();
-    const distanceAlongNormal = normal.getDotProduct(this.velocity);
+    collisionNormal.normalize();
+    const distanceAlongNormal = collisionNormal.dot(this.velocity);
 
-    this.velocity.x -= 2.0 * distanceAlongNormal * normal.x;
-    this.velocity.y -= 2.0 * distanceAlongNormal * normal.y;
+    this.velocity.x -= 2.0 * distanceAlongNormal * collisionNormal.x;
+    this.velocity.y -= 2.0 * distanceAlongNormal * collisionNormal.y;
   }
 
   handleCollisionWithRect(boundary: RectBoundary) {
@@ -231,19 +235,13 @@ export default class Spaceship extends Entity {
       this.y > boundary.y + boundary.height + 200
     )
       return;
-    let collsion;
+    let collision;
     for (const polygon of this.CONVEX_POLYGONS) {
-      collsion = checkCollisionBtwnPolygons(polygon, boundary);
-      if (collsion) {
-        break;
-      }
+      collision = getCollisionBtwnPolygons(polygon, boundary);
+      if (collision) break;
     }
-    // const collsion = checkCollisionBtwnPolygons(
-    //   this.BOUNDING_BOX,
-    //   boundary
-    // );s
-    if (!collsion) return;
-    const { displacement, collisionNormal } = collsion;
+    if (!collision) return;
+    const { displacement, collisionNormal } = collision;
     this.updateXPosition(displacement.x);
     this.updateYPosition(displacement.y);
     if (Math.abs(collisionNormal!.y) > Math.abs(collisionNormal!.x))
@@ -290,17 +288,6 @@ export default class Spaceship extends Entity {
   }
 
   draw(c: CanvasRenderingContext2D) {
-    c.beginPath();
-    for (const polygon of this.CONVEX_POLYGONS) {
-      c.moveTo(polygon.vertices[0].x, polygon.vertices[0].y);
-      for (let i = 0; i < polygon.vertices.length; i++) {
-        c.lineTo(
-          polygon.vertices[(i + 1) % polygon.vertices.length].x,
-          polygon.vertices[(i + 1) % polygon.vertices.length].y
-        );
-      }
-    }
-    c.stroke();
     const { x: xCenter, y: yCenter } = this.getCenter();
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.translate(xCenter, yCenter);
