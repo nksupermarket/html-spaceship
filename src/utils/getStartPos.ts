@@ -1,6 +1,6 @@
 import Boundary from '../classes/boundaries';
 import Spaceship from '../classes/Spaceship';
-import { checkIfInsideRect } from './checkCollision';
+import { checkIfInsideRect } from './collision';
 import { SS_DIMENSIONS } from './constants';
 
 export default function getStartPos(boundaries: Boundary[]) {

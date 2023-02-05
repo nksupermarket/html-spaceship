@@ -1,7 +1,5 @@
-import Entity from './Entity';
-import { Bound } from '../../types/types';
-import Line from './Line';
 import { XY } from '../../types/interfaces';
+import Entity from './Entity';
 
 export default class Boundary extends Entity {
   el: HTMLElement;
@@ -38,27 +36,55 @@ export class CircleBoundary extends Boundary {
 
 export class RectBoundary extends Boundary {
   readonly kind: 'rect';
-  edges: Bound<Line>;
+  points: XY[];
   constructor(el: HTMLElement) {
     super(el);
     this.kind = 'rect';
-    this.edges = {
-      top: new Line(
-        { x: this.x, y: this.y },
-        { x: this.x + this.width, y: this.y }
-      ),
-      left: new Line(
-        { x: this.x, y: this.y },
-        { x: this.x, y: this.y + this.height }
-      ),
-      right: new Line(
-        { x: this.x + this.width, y: this.y },
-        { x: this.x + this.width, y: this.y + this.height }
-      ),
-      bottom: new Line(
-        { x: this.x, y: this.y + this.height },
-        { x: this.x + this.width, y: this.y + this.height }
-      ),
-    };
+    this.points = [
+      {
+        x: this.x,
+        y: this.y,
+      },
+      {
+        x: this.x + this.width,
+        y: this.y,
+      },
+      {
+        x: this.x,
+        y: this.y + this.height,
+      },
+      {
+        x: this.x + this.width,
+        y: this.y + this.width,
+      },
+    ];
+  }
+
+  update() {
+    const { x, y, height, width } = this.el.getBoundingClientRect();
+
+    this.x = x;
+    this.y = y;
+    this.height = height;
+    this.width = width;
+
+    this.vertices = [
+      {
+        x: this.x,
+        y: this.y,
+      },
+      {
+        x: this.x + this.width,
+        y: this.y,
+      },
+      {
+        x: this.x,
+        y: this.y + this.height,
+      },
+      {
+        x: this.x + this.width,
+        y: this.y + this.width,
+      },
+    ];
   }
 }

@@ -1,11 +1,12 @@
-import { Center, MouseInterface, XY } from '../../types/interfaces';
+import { MouseInterface, XY } from '../../types/interfaces';
 import { Axis, Direction } from '../../types/types';
-import { getCollisionBetweenRectAndCircle } from '../utils/checkCollision';
+import { getCollisionBetweenRectAndCircle } from '../utils/collision';
 import { SS_DIMENSIONS } from '../utils/constants';
 import { createImage, getExtremities } from '../utils/misc';
-import { CircleBoundary, RectBoundary } from './boundaries';
+import { CircleBoundary } from './boundaries';
 import Bullet from './Bullet';
 import Entity from './Entity';
+import Polygon from './Polygon';
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
@@ -66,7 +67,6 @@ const drawRoundRect = function (
 };
 
 type DecelerateScalars = Record<Axis, number>;
-
 export default class Spaceship extends Entity {
   angle: number;
   shotAvailable: boolean;
@@ -77,6 +77,8 @@ export default class Spaceship extends Entity {
   readonly MAX_SPEED: number;
   velocity: XY;
   readonly IMAGE: HTMLImageElement;
+  readonly CONVEX_POLYGONS: Polygon[];
+  readonly BOUNDING_BOX: Polygon;
 
   constructor({ x, y }: XY, theme: 'dark' | 'light', speed: number) {
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
@@ -96,10 +98,29 @@ export default class Spaceship extends Entity {
         ? require('../assets/optimized/rocket-lightmode.png').default
         : require('../assets/optimized/rocket-darkmode.png').default
     );
-  }
-
-  get vertices() {
-    return this.getVertices();
+    this.CONVEX_POLYGONS = this.getPolygons();
+    this.BOUNDING_BOX = new Polygon([
+      // topLeft:
+      {
+        x: x,
+        y: y,
+      },
+      // bottomLeft:
+      {
+        x: x,
+        y: y + this.height,
+      },
+      // topRight:
+      {
+        x: x + this.width,
+        y: y,
+      },
+      // bottomRight:
+      {
+        x: x + this.width,
+        y: y + this.height,
+      },
+    ]);
   }
 
   move(dir: Direction) {
@@ -138,7 +159,7 @@ export default class Spaceship extends Entity {
   }
 
   handleBoundsCollision(bounds: XY) {
-    const extremities = getExtremities(this.vertices);
+    const extremities = getExtremities(this.BOUNDING_BOX.vertices);
 
     for (const [key, value] of Object.entries(extremities)) {
       switch (key) {
@@ -178,7 +199,7 @@ export default class Spaceship extends Entity {
     const collision = getCollisionBetweenRectAndCircle(
       boundary.getCenter(),
       boundary.radius,
-      this.vertices
+      this.BOUNDING_BOX.vertices
     );
     if (!collision) return;
 
@@ -195,70 +216,87 @@ export default class Spaceship extends Entity {
     this.velocity.y -= 2.0 * distanceAlongNormal * normal.y;
   }
 
-  handleCollisionWithRect(boundary: RectBoundary) {
-    let collision = null;
-    for (let i = 0; i < this.vertices.length; i++) {
-      const collideY =
-        boundary.y <= this.vertices[i].y &&
-        boundary.y + boundary.height > this.vertices[i].y;
-      const collideX =
-        boundary.x <= this.vertices[i].x &&
-        boundary.x + boundary.width > this.vertices[i].x;
+  // handleCollisionWithRect(boundary: RectBoundary) {
+  //   function checkPointInsideRect(point: XY, rect: Entity) {
+  //     const collideY = rect.y <= point.y && rect.y + rect.height > point.y;
+  //     const collideX = rect.x <= point.x && rect.x + rect.width > point.x;
 
-      if (collideY && collideX) {
-        // find whether the edge the ship collided with is a horizontal edge or vertical by comparing how deep the ship is on x and y axis. Deeper on x-axis means the ship hit a horizontal edge, deeper on y-axis means the ship hit a vertical edge
-        const sizeOfYPenetration = Math.min(
-          this.vertices[i].y - boundary.y,
-          boundary.y + boundary.height - this.vertices[i].y
-        );
-        const sizeOfXPenetration = Math.min(
-          this.vertices[i].x - boundary.x,
-          boundary.x + boundary.width - this.vertices[i].x
-        );
-        collision =
-          sizeOfYPenetration > sizeOfXPenetration
-            ? {
-                axis: 'x',
-                amount: sizeOfXPenetration,
-              }
-            : {
-                axis: 'y',
-                amount: sizeOfYPenetration,
-              };
-      }
-      if (collision) break;
-    }
-    if (!collision) return;
-    switch (collision.axis) {
-      case 'x':
-        this.updateXPosition(
-          this.velocity.x > 0 ? -collision.amount : collision.amount
-        );
-        this.velocity.x = -this.velocity.x;
-        return;
-      case 'y':
-        this.updateYPosition(
-          this.velocity.y > 0 ? -collision.amount : collision.amount
-        );
-        this.velocity.y = -this.velocity.y;
-        return;
+  //     return collideY && collideX;
+  //   }
+  //   function getCollisionSizeAndDirection(point: XY, rect: Entity) {
+  //     // find whether the edge the ship collided with is a horizontal edge or vertical by comparing how deep the ship is on x and y axis. Deeper on x-axis means the ship hit a horizontal edge, deeper on y-axis means the ship hit a vertical edge
+  //     const sizeOfYPenetration = Math.min(
+  //       point.y - rect.y,
+  //       rect.y + rect.height - point.y
+  //     );
+  //     const sizeOfXPenetration = Math.min(
+  //       point.x - rect.x,
+  //       rect.x + rect.width - point.x
+  //     );
+  //     return sizeOfYPenetration > sizeOfXPenetration
+  //       ? {
+  //           axis: 'x',
+  //           amount: sizeOfXPenetration,
+  //         }
+  //       : {
+  //           axis: 'y',
+  //           amount: sizeOfYPenetration,
+  //         };
+  //   }
+  //   let collision = null;
+  //   for (let i = 0; i < this.vertices.length; i++) {
+  //     const shipInsideBoundary = checkPointInsideRect(
+  //       this.vertices[i],
+  //       boundary
+  //     );
 
-      default:
-        return;
-    }
-  }
+  //     if (shipInsideBoundary) {
+  //       collision = getCollisionSizeAndDirection(this.vertices[i], boundary);
+  //       break;
+  //     }
+  //   }
+  //   if (!collision) return;
+  //   switch (collision.axis) {
+  //     case 'x':
+  //       this.updateXPosition(
+  //         this.velocity.x > 0 ? -collision.amount : collision.amount
+  //       );
+  //       this.velocity.x = -this.velocity.x;
+  //       return;
+  //     case 'y':
+  //       this.updateYPosition(
+  //         this.velocity.y > 0 ? -collision.amount : collision.amount
+  //       );
+  //       this.velocity.y = -this.velocity.y;
+  //       return;
+
+  //     default:
+  //       return;
+  //   }
+  // }
 
   updateXPosition(shift = this.velocity.x) {
     this.x += shift;
+    this.BOUNDING_BOX.updateXPosition(shift);
+
+    for (const polygon of this.CONVEX_POLYGONS) {
+      polygon.updateXPosition(shift);
+    }
   }
 
   updateYPosition(shift = this.velocity.y) {
     this.y += shift;
+
+    this.BOUNDING_BOX.updateYPosition(shift);
+
+    for (const polygon of this.CONVEX_POLYGONS) {
+      polygon.updateYPosition(shift);
+    }
   }
 
   shoot() {
     if (!this.shotAvailable) return;
-    const { xCenter, yCenter } = this.getCenter();
+    const { x: xCenter, y: yCenter } = this.getCenter();
 
     const r = this.height / 2;
     const x = r * Math.cos(this.angle + Math.PI / 2) + xCenter;
@@ -268,18 +306,21 @@ export default class Spaceship extends Entity {
     this.shotAvailable = false;
   }
 
-  getCenter(): Center {
-    const x = this.x;
-    const y = this.y;
+  getCenter(): XY {
+    const x = this.x + this.width / 2;
+    const y = this.y + this.height / 2;
 
-    const xCenter = x + this.width / 2;
-    const yCenter = y + this.height / 2;
-
-    return { xCenter, yCenter };
+    return { x, y };
   }
 
   draw(c: CanvasRenderingContext2D) {
-    const { xCenter, yCenter } = this.getCenter();
+    c.moveTo(this.BOUNDING_BOX.vertices[0].x, this.BOUNDING_BOX.vertices[0].y);
+    c.lineTo(this.BOUNDING_BOX.vertices[1].x, this.BOUNDING_BOX.vertices[1].y);
+    c.lineTo(this.BOUNDING_BOX.vertices[3].x, this.BOUNDING_BOX.vertices[3].y);
+    c.lineTo(this.BOUNDING_BOX.vertices[2].x, this.BOUNDING_BOX.vertices[2].y);
+    c.stroke();
+
+    const { x: xCenter, y: yCenter } = this.getCenter();
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.translate(xCenter, yCenter);
     c.rotate(this.angle);
@@ -298,7 +339,7 @@ export default class Spaceship extends Entity {
   }
 
   drawFlames(c: CanvasRenderingContext2D) {
-    const { xCenter, yCenter } = this.getCenter();
+    const { x: xCenter, y: yCenter } = this.getCenter();
 
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.translate(xCenter, yCenter);
@@ -357,14 +398,19 @@ export default class Spaceship extends Entity {
 
   alignToMouse(mouse: MouseInterface) {
     if (mouse.x === null || mouse.y === null) return;
-    const { xCenter, yCenter } = this.getCenter();
+    const center = this.getCenter();
 
-    const dx = mouse.x - xCenter;
-    const dy = mouse.y - yCenter;
+    const dx = mouse.x - center.x;
+    const dy = mouse.y - center.y;
     // subtract 90deg bc the ship starts at 90deg
     const theta = Math.atan2(dy, dx) - Math.PI / 2;
 
     this.angle = theta;
+
+    this.BOUNDING_BOX.rotate(theta, center);
+    for (const polygon of this.CONVEX_POLYGONS) {
+      polygon.rotate(theta, center);
+    }
   }
 
   resetDeceleration(axis: Axis) {
@@ -386,94 +432,152 @@ export default class Spaceship extends Entity {
     this.bullets.slice(i, 1);
   }
 
-  getVertices(angle = this.angle): XY[] {
-    const { xCenter, yCenter } = this.getCenter();
-
+  getVerticesBoundingBox(): XY[] {
     const x = this.x;
     const y = this.y;
 
-    const edges = [
+    return [
       // topLeft:
       {
-        x: x - xCenter,
-        y: y - yCenter,
+        x: x,
+        y: y,
       },
       // bottomLeft:
       {
-        x: x - xCenter,
-        y: y + this.height - yCenter,
+        x: x,
+        y: y + this.height,
       },
       // topRight:
       {
-        x: x + this.width - xCenter,
-        y: y - yCenter,
+        x: x + this.width,
+        y: y,
       },
       // bottomRight:
       {
-        x: x + this.width - xCenter,
-        y: y + this.height - yCenter,
+        x: x + this.width,
+        y: y + this.height,
       },
     ];
-
-    const afterRotation = edges.map((p) => ({
-      x: p.x * Math.cos(angle) - p.y * Math.sin(angle) + xCenter,
-      y: p.x * Math.sin(angle) + p.y * Math.cos(angle) + yCenter,
-    }));
-
-    return afterRotation;
   }
 
-  getEdges() {
-    const { xCenter, yCenter } = this.getCenter();
+  getPolygons() {
+    const tip = {
+      x: (this.x + this.x + this.width) / 2,
+      y: this.y + this.height,
+    };
 
-    const x = this.x;
-    const y = this.y;
+    const headEndLeft = { x: tip.x - 12, y: this.y + this.height - 33 };
+    const headEndRight = { x: tip.x + 12, y: this.y + this.height - 33 };
+    const wingLeftBottom = {
+      x: this.x,
+      y: this.y + 10,
+    };
+    const wingRightBottom = {
+      x: this.x + this.width,
+      y: this.y + 10,
+    };
+    const wingLeftTop = {
+      x: this.x,
+      y: wingLeftBottom.y + 30,
+    };
+    const wingRightTop = {
+      x: this.x + this.width,
+      y: wingLeftBottom.y + 30,
+    };
+    const bodyEndLeft = {
+      x: headEndLeft.x,
+      y: wingLeftTop.y,
+    };
+    const bodyEndRight = {
+      x: headEndRight.x,
+      y: wingLeftTop.y,
+    };
+    const boosterLeftBottom = {
+      x: bodyEndLeft.x,
+      y: this.y,
+    };
+    const boosterRightBottom = {
+      x: bodyEndRight.x,
+      y: this.y,
+    };
+    const boosterLeftTop = {
+      x: bodyEndLeft.x,
+      y: wingLeftBottom.y,
+    };
+    const boosterRightTop = {
+      x: bodyEndRight.x,
+      y: wingRightBottom.y,
+    };
 
-    const edges = [
-      [
-        {
-          x: x - xCenter,
-          y: y - yCenter,
-        },
-        { x: x - xCenter, y: y + this.height - yCenter },
-      ],
-      [
-        {
-          x: x - xCenter,
-          y: y - yCenter,
-        },
-        {
-          x: x + this.width - xCenter,
-          y: y - yCenter,
-        },
-      ],
-      [
-        {
-          x: x + this.width - xCenter,
-          y: y - yCenter,
-        },
-        {
-          x: x + this.width - xCenter,
-          y: y + this.height - yCenter,
-        },
-      ],
-      [
-        {
-          x: x - xCenter,
-          y: y + this.height - yCenter,
-        },
-        {
-          x: x + this.width - xCenter,
-          y: y + this.height - yCenter,
-        },
-      ],
-    ].map((v) =>
-      v.map((p) => ({
-        x: p.x * Math.cos(this.angle) - p.y * Math.sin(this.angle) + xCenter,
-        y: p.x * Math.sin(this.angle) + p.y * Math.cos(this.angle) + yCenter,
-      }))
-    );
+    const headAndBody: XY[] = [
+      headEndRight,
+      tip,
+      headEndLeft,
+      bodyEndLeft,
+      bodyEndRight,
+    ];
+    const wing = [wingLeftTop, wingLeftBottom, wingRightBottom, wingRightTop];
+    const booster = [
+      boosterLeftTop,
+      boosterLeftBottom,
+      boosterRightBottom,
+      boosterRightTop,
+    ];
 
-    return edges;
+    return [new Polygon(headAndBody), new Polygon(wing), new Polygon(booster)];
   }
+
+  // getEdges() {
+  //   const { xCenter, yCenter } = this.getCenter();
+
+  //   const x = this.x;
+  //   const y = this.y;
+
+  //   const edges = [
+  //     [
+  //       {
+  //         x: x - xCenter,
+  //         y: y - yCenter,
+  //       },
+  //       { x: x - xCenter, y: y + this.height - yCenter },
+  //     ],
+  //     [
+  //       {
+  //         x: x - xCenter,
+  //         y: y - yCenter,
+  //       },
+  //       {
+  //         x: x + this.width - xCenter,
+  //         y: y - yCenter,
+  //       },
+  //     ],
+  //     [
+  //       {
+  //         x: x + this.width - xCenter,
+  //         y: y - yCenter,
+  //       },
+  //       {
+  //         x: x + this.width - xCenter,
+  //         y: y + this.height - yCenter,
+  //       },
+  //     ],
+  //     [
+  //       {
+  //         x: x - xCenter,
+  //         y: y + this.height - yCenter,
+  //       },
+  //       {
+  //         x: x + this.width - xCenter,
+  //         y: y + this.height - yCenter,
+  //       },
+  //     ],
+  //   ].map((v) =>
+  //     v.map((p) => ({
+  //       x: p.x * Math.cos(this.angle) - p.y * Math.sin(this.angle) + xCenter,
+  //       y: p.x * Math.sin(this.angle) + p.y * Math.cos(this.angle) + yCenter,
+  //     }))
+  //   );
+
+  //   return edges;
+  // }
 }

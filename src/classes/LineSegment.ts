@@ -1,6 +1,6 @@
 import { XY } from '../../types/interfaces';
 
-export default class Line {
+export default class LineSegment {
   point1: XY;
   point2: XY;
   constructor(point1: XY, point2: XY) {

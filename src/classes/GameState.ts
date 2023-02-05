@@ -2,7 +2,7 @@ import { Direction, Mouse } from '../../types/types';
 import {
   checkCollisionBtwnCircles,
   checkIfInsideRect,
-} from '../utils/checkCollision';
+} from '../utils/collision';
 import { DIRECTIONS } from '../utils/constants';
 import getStartPos from '../utils/getStartPos';
 import { getTranslateY } from '../utils/misc';
@@ -183,7 +183,7 @@ export default class GameState {
 
         if (boundary.kind === 'circle')
           this.spaceship.handleCollisionWithCircle(boundary);
-        else this.spaceship.handleCollisionWithRect(boundary);
+        // else this.spaceship.handleCollisionWithRect(boundary);
 
         boundary.update();
         if (boundary.el.classList.contains(this.REMOVE_CLASS))

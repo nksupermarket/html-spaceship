@@ -1,6 +1,8 @@
 import { XY } from '../../types/interfaces';
+import { RectBoundary } from '../classes/boundaries';
 import Bullet from '../classes/Bullet';
 import Entity from '../classes/Entity';
+import Polygon from '../classes/Polygon';
 import Shootable from '../classes/Shootable';
 import Vector from '../classes/Vector';
 import { distBtwnTwoPoints, getClosestPoint, sqr } from './math';
@@ -55,4 +57,41 @@ export function checkCollisionBtwnCircles(
   const distance = Math.sqrt(sqr(x2 - x1) + sqr(y2 - y1));
 
   return distance <= c1.width / 2 + c2.width / 2;
+}
+
+export function checkCollisionBtwnPolygons(
+  p1: Polygon | RectBoundary,
+  p2: RectBoundary | Polygon
+) {
+  for (let shape = 0; shape < 2; shape++) {
+    if (shape === 1) {
+      const tmp = p1;
+      p1 = p2;
+      p2 = tmp;
+    }
+    for (let i = 0; i < p1.vertices.length; i++) {
+      const normal = Vector.fromPoints(
+        p1.vertices[i],
+        p1.vertices[(i + 1) % p1.vertices.length]
+      ).toRightNormal();
+
+      let minP1 = Infinity;
+      let maxP1 = -Infinity;
+      for (let j = 0; i < p1.vertices.length; i++) {
+        const dp = normal.getDotProduct(p1.vertices[j]);
+        minP1 = Math.min(dp, minP1);
+        maxP1 = Math.max(dp, maxP1);
+      }
+
+      let minP2 = Infinity;
+      let maxP2 = -Infinity;
+      for (let j = 0; i < p2.vertices.length; i++) {
+        const dp = normal.getDotProduct(p2.vertices[j]);
+        minP2 = Math.min(dp, minP2);
+        maxP2 = Math.max(dp, maxP2);
+      }
+
+      if (!(maxP2 >= minP1 && maxP1 >= minP2)) return false;
+    }
+  }
 }

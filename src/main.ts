@@ -206,8 +206,8 @@ export default function run(config: Config) {
       .forEach((el) => el.classList.remove(config.removedClass));
     document.documentElement.style.overflow = 'scroll';
 
-    const translateVal = getTranslateY(this.document.body);
-    document.body.style.transform = '';
+    const translateVal = getTranslateY(p.rootEl);
+    p.rootEl.style.transform = '';
     window.scrollTo(0, -translateVal + window.scrollY);
 
     config.onRemove && config.onRemove();
