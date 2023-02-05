@@ -1,9 +1,12 @@
 import { MouseInterface, XY } from '../../types/interfaces';
 import { Axis, Direction } from '../../types/types';
-import { getCollisionBetweenRectAndCircle } from '../utils/collision';
+import {
+  checkCollisionBtwnPolygons,
+  getCollisionBetweenRectAndCircle,
+} from '../utils/collision';
 import { SS_DIMENSIONS } from '../utils/constants';
 import { createImage, getExtremities } from '../utils/misc';
-import { CircleBoundary } from './boundaries';
+import { CircleBoundary, RectBoundary } from './boundaries';
 import Bullet from './Bullet';
 import Entity from './Entity';
 import Polygon from './Polygon';
@@ -79,6 +82,7 @@ export default class Spaceship extends Entity {
   readonly IMAGE: HTMLImageElement;
   readonly CONVEX_POLYGONS: Polygon[];
   readonly BOUNDING_BOX: Polygon;
+  colliding: boolean;
 
   constructor({ x, y }: XY, theme: 'dark' | 'light', speed: number) {
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
@@ -99,28 +103,32 @@ export default class Spaceship extends Entity {
         : require('../assets/optimized/rocket-darkmode.png').default
     );
     this.CONVEX_POLYGONS = this.getPolygons();
-    this.BOUNDING_BOX = new Polygon([
-      // topLeft:
-      {
-        x: x,
-        y: y,
-      },
-      // bottomLeft:
-      {
-        x: x,
-        y: y + this.height,
-      },
-      // topRight:
-      {
-        x: x + this.width,
-        y: y,
-      },
-      // bottomRight:
-      {
-        x: x + this.width,
-        y: y + this.height,
-      },
-    ]);
+    this.BOUNDING_BOX = new Polygon(
+      [
+        // topLeft:
+        {
+          x: x,
+          y: y,
+        },
+        // bottomLeft:
+        {
+          x: x,
+          y: y + this.height,
+        },
+        // topRight:
+        {
+          x: x + this.width,
+          y: y,
+        },
+        // bottomRight:
+        {
+          x: x + this.width,
+          y: y + this.height,
+        },
+      ],
+      { x: this.x + this.width / 2, y: this.y + this.height / 2 }
+    );
+    this.colliding = false;
   }
 
   move(dir: Direction) {
@@ -197,7 +205,7 @@ export default class Spaceship extends Entity {
 
   handleCollisionWithCircle(boundary: CircleBoundary) {
     const collision = getCollisionBetweenRectAndCircle(
-      boundary.getCenter(),
+      boundary.center,
       boundary.radius,
       this.BOUNDING_BOX.vertices
     );
@@ -216,64 +224,27 @@ export default class Spaceship extends Entity {
     this.velocity.y -= 2.0 * distanceAlongNormal * normal.y;
   }
 
-  // handleCollisionWithRect(boundary: RectBoundary) {
-  //   function checkPointInsideRect(point: XY, rect: Entity) {
-  //     const collideY = rect.y <= point.y && rect.y + rect.height > point.y;
-  //     const collideX = rect.x <= point.x && rect.x + rect.width > point.x;
-
-  //     return collideY && collideX;
-  //   }
-  //   function getCollisionSizeAndDirection(point: XY, rect: Entity) {
-  //     // find whether the edge the ship collided with is a horizontal edge or vertical by comparing how deep the ship is on x and y axis. Deeper on x-axis means the ship hit a horizontal edge, deeper on y-axis means the ship hit a vertical edge
-  //     const sizeOfYPenetration = Math.min(
-  //       point.y - rect.y,
-  //       rect.y + rect.height - point.y
-  //     );
-  //     const sizeOfXPenetration = Math.min(
-  //       point.x - rect.x,
-  //       rect.x + rect.width - point.x
-  //     );
-  //     return sizeOfYPenetration > sizeOfXPenetration
-  //       ? {
-  //           axis: 'x',
-  //           amount: sizeOfXPenetration,
-  //         }
-  //       : {
-  //           axis: 'y',
-  //           amount: sizeOfYPenetration,
-  //         };
-  //   }
-  //   let collision = null;
-  //   for (let i = 0; i < this.vertices.length; i++) {
-  //     const shipInsideBoundary = checkPointInsideRect(
-  //       this.vertices[i],
-  //       boundary
-  //     );
-
-  //     if (shipInsideBoundary) {
-  //       collision = getCollisionSizeAndDirection(this.vertices[i], boundary);
-  //       break;
-  //     }
-  //   }
-  //   if (!collision) return;
-  //   switch (collision.axis) {
-  //     case 'x':
-  //       this.updateXPosition(
-  //         this.velocity.x > 0 ? -collision.amount : collision.amount
-  //       );
-  //       this.velocity.x = -this.velocity.x;
-  //       return;
-  //     case 'y':
-  //       this.updateYPosition(
-  //         this.velocity.y > 0 ? -collision.amount : collision.amount
-  //       );
-  //       this.velocity.y = -this.velocity.y;
-  //       return;
-
-  //     default:
-  //       return;
-  //   }
-  // }
+  handleCollisionWithRect(boundary: RectBoundary) {
+    if (
+      this.x + 200 < boundary.x ||
+      this.x > boundary.x + boundary.width + 200 ||
+      this.y + 200 < boundary.y ||
+      this.y > boundary.y + boundary.height + 200
+    )
+      return;
+    // let displacement;
+    // for (const polygon of this.CONVEX_POLYGONS) {
+    //   displacement = checkCollisionBtwnPolygons(polygon, boundary);
+    //   if (displacement) break;
+    // }
+    const displacement = checkCollisionBtwnPolygons(
+      this.BOUNDING_BOX,
+      boundary
+    );
+    if (!displacement) return;
+    this.updateXPosition(-displacement.x);
+    this.updateYPosition(-displacement.y);
+  }
 
   updateXPosition(shift = this.velocity.x) {
     this.x += shift;
@@ -314,12 +285,19 @@ export default class Spaceship extends Entity {
   }
 
   draw(c: CanvasRenderingContext2D) {
-    c.moveTo(this.BOUNDING_BOX.vertices[0].x, this.BOUNDING_BOX.vertices[0].y);
-    c.lineTo(this.BOUNDING_BOX.vertices[1].x, this.BOUNDING_BOX.vertices[1].y);
-    c.lineTo(this.BOUNDING_BOX.vertices[3].x, this.BOUNDING_BOX.vertices[3].y);
-    c.lineTo(this.BOUNDING_BOX.vertices[2].x, this.BOUNDING_BOX.vertices[2].y);
-    c.stroke();
+    c.beginPath();
 
+    for (const polygon of this.CONVEX_POLYGONS) {
+      c.moveTo(polygon.vertices[0].x, polygon.vertices[0].y);
+      for (let i = 0; i < polygon.vertices.length; i++) {
+        c.lineTo(
+          polygon.vertices[(i + 1) % polygon.vertices.length].x,
+          polygon.vertices[(i + 1) % polygon.vertices.length].y
+        );
+      }
+      c.fillRect(polygon.center.x, polygon.center.y, 10, 10);
+    }
+    c.stroke();
     const { x: xCenter, y: yCenter } = this.getCenter();
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.translate(xCenter, yCenter);
@@ -524,7 +502,20 @@ export default class Spaceship extends Entity {
       boosterRightTop,
     ];
 
-    return [new Polygon(headAndBody), new Polygon(wing), new Polygon(booster)];
+    return [
+      new Polygon(headAndBody, {
+        x: (headEndLeft.x + headEndRight.x) / 2,
+        y: tip.y - (tip.y - bodyEndLeft.y) / 2,
+      }),
+      new Polygon(wing, {
+        x: (wingLeftTop.x + wingRightTop.x) / 2,
+        y: (wingLeftTop.y + wingLeftBottom.y) / 2,
+      }),
+      new Polygon(booster, {
+        x: (boosterLeftTop.x + boosterRightTop.x) / 2,
+        y: (boosterLeftTop.y + boosterRightBottom.y) / 2,
+      }),
+    ];
   }
 
   // getEdges() {

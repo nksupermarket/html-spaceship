@@ -3,11 +3,13 @@ import Entity from './Entity';
 
 export default class Boundary extends Entity {
   el: HTMLElement;
+  center: XY;
 
   constructor(el: HTMLElement) {
     const { x, y, height, width } = el.getBoundingClientRect();
     super(x, y, height, width);
     this.el = el;
+    this.center = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
   }
 
   update() {
@@ -17,6 +19,12 @@ export default class Boundary extends Entity {
     this.y = y;
     this.height = height;
     this.width = width;
+    this.center = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
+  }
+
+  draw(c: CanvasRenderingContext2D) {
+    c.strokeRect(this.x, this.y, this.width, this.height);
+    c.fillRect(this.center.x, this.center.y, 10, 10);
   }
 }
 
@@ -28,19 +36,16 @@ export class CircleBoundary extends Boundary {
     this.kind = 'circle';
     this.radius = this.width / 2;
   }
-
-  getCenter(): XY {
-    return { x: this.x + this.width / 2, y: this.y + this.height / 2 };
-  }
 }
 
 export class RectBoundary extends Boundary {
   readonly kind: 'rect';
-  points: XY[];
+  vertices: XY[];
+
   constructor(el: HTMLElement) {
     super(el);
     this.kind = 'rect';
-    this.points = [
+    this.vertices = [
       {
         x: this.x,
         y: this.y,
@@ -83,8 +88,10 @@ export class RectBoundary extends Boundary {
       },
       {
         x: this.x + this.width,
-        y: this.y + this.width,
+        y: this.y + this.height,
       },
     ];
+
+    this.center = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
   }
 }

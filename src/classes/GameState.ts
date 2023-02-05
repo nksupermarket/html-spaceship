@@ -183,7 +183,7 @@ export default class GameState {
 
         if (boundary.kind === 'circle')
           this.spaceship.handleCollisionWithCircle(boundary);
-        // else this.spaceship.handleCollisionWithRect(boundary);
+        else this.spaceship.handleCollisionWithRect(boundary);
 
         boundary.update();
         if (boundary.el.classList.contains(this.REMOVE_CLASS))

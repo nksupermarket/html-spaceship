@@ -63,6 +63,8 @@ export function checkCollisionBtwnPolygons(
   p1: Polygon | RectBoundary,
   p2: RectBoundary | Polygon
 ) {
+  let overlap = Infinity;
+
   for (let shape = 0; shape < 2; shape++) {
     if (shape === 1) {
       const tmp = p1;
@@ -74,10 +76,11 @@ export function checkCollisionBtwnPolygons(
         p1.vertices[i],
         p1.vertices[(i + 1) % p1.vertices.length]
       ).toRightNormal();
+      normal.normalize();
 
       let minP1 = Infinity;
       let maxP1 = -Infinity;
-      for (let j = 0; i < p1.vertices.length; i++) {
+      for (let j = 0; j < p1.vertices.length; j++) {
         const dp = normal.getDotProduct(p1.vertices[j]);
         minP1 = Math.min(dp, minP1);
         maxP1 = Math.max(dp, maxP1);
@@ -85,13 +88,26 @@ export function checkCollisionBtwnPolygons(
 
       let minP2 = Infinity;
       let maxP2 = -Infinity;
-      for (let j = 0; i < p2.vertices.length; i++) {
-        const dp = normal.getDotProduct(p2.vertices[j]);
+      for (let k = 0; k < p2.vertices.length; k++) {
+        const dp = normal.getDotProduct(p2.vertices[k]);
         minP2 = Math.min(dp, minP2);
         maxP2 = Math.max(dp, maxP2);
       }
 
-      if (!(maxP2 >= minP1 && maxP1 >= minP2)) return false;
+      overlap = Math.min(
+        Math.min(maxP1, maxP2) - Math.max(minP1, minP2),
+        overlap
+      );
+
+      if (!(maxP2 >= minP1 && maxP1 >= minP2)) return null;
     }
   }
+
+  const displacementVector = Vector.fromPoints(p2.center, p1.center);
+  const magnitude = displacementVector.getMagnitude();
+  const displacement = {
+    x: (overlap * displacementVector.x) / magnitude,
+    y: (overlap * displacementVector.y) / magnitude,
+  };
+  return displacement;
 }
