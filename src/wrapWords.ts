@@ -1,6 +1,5 @@
 export default function (className: string) {
   document.querySelectorAll('.' + className).forEach((b) => {
-    console.log(b.textContent);
     b.innerHTML = b.textContent
       ?.replace(/[^ -~]+/g, '')
       .split(' ')

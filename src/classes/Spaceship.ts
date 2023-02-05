@@ -115,15 +115,14 @@ export default class Spaceship extends Entity {
           x: x,
           y: y + this.height,
         },
-        // topRight:
-        {
-          x: x + this.width,
-          y: y,
-        },
         // bottomRight:
         {
           x: x + this.width,
           y: y + this.height,
+        }, // topRight:
+        {
+          x: x + this.width,
+          y: y,
         },
       ],
       { x: this.x + this.width / 2, y: this.y + this.height / 2 }
@@ -232,18 +231,24 @@ export default class Spaceship extends Entity {
       this.y > boundary.y + boundary.height + 200
     )
       return;
-    // let displacement;
-    // for (const polygon of this.CONVEX_POLYGONS) {
-    //   displacement = checkCollisionBtwnPolygons(polygon, boundary);
-    //   if (displacement) break;
-    // }
-    const displacement = checkCollisionBtwnPolygons(
-      this.BOUNDING_BOX,
-      boundary
-    );
-    if (!displacement) return;
-    this.updateXPosition(-displacement.x);
-    this.updateYPosition(-displacement.y);
+    let collsion;
+    for (const polygon of this.CONVEX_POLYGONS) {
+      collsion = checkCollisionBtwnPolygons(polygon, boundary);
+      if (collsion) {
+        break;
+      }
+    }
+    // const collsion = checkCollisionBtwnPolygons(
+    //   this.BOUNDING_BOX,
+    //   boundary
+    // );s
+    if (!collsion) return;
+    const { displacement, collisionNormal } = collsion;
+    this.updateXPosition(displacement.x);
+    this.updateYPosition(displacement.y);
+    if (Math.abs(collisionNormal!.y) > Math.abs(collisionNormal!.x))
+      this.velocity.y = -this.velocity.y;
+    else this.velocity.x = -this.velocity.x;
   }
 
   updateXPosition(shift = this.velocity.x) {
@@ -286,7 +291,6 @@ export default class Spaceship extends Entity {
 
   draw(c: CanvasRenderingContext2D) {
     c.beginPath();
-
     for (const polygon of this.CONVEX_POLYGONS) {
       c.moveTo(polygon.vertices[0].x, polygon.vertices[0].y);
       for (let i = 0; i < polygon.vertices.length; i++) {
@@ -295,7 +299,6 @@ export default class Spaceship extends Entity {
           polygon.vertices[(i + 1) % polygon.vertices.length].y
         );
       }
-      c.fillRect(polygon.center.x, polygon.center.y, 10, 10);
     }
     c.stroke();
     const { x: xCenter, y: yCenter } = this.getCenter();

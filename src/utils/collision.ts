@@ -59,48 +59,58 @@ export function checkCollisionBtwnCircles(
   return distance <= c1.width / 2 + c2.width / 2;
 }
 
-export function checkCollisionBtwnPolygons(
-  p1: Polygon | RectBoundary,
-  p2: RectBoundary | Polygon
-) {
+function getNormals(vertices: XY[]) {
+  let normals = [];
+
+  // Loop through each edge
+  for (let i = 0; i < vertices.length; i++) {
+    const vector = Vector.fromPoints(
+      vertices[i],
+      vertices[(i + 1) % vertices.length]
+    ).toRightNormal();
+    vector.normalize();
+    normals.push(vector);
+  }
+  return normals;
+}
+
+function projectOntoNormal(vertices: XY[], normal: Vector) {
+  let min = Infinity;
+  let max = -Infinity;
+  for (let i = 0; i < vertices.length; i++) {
+    const dp = normal.getDotProduct(vertices[i]);
+    min = Math.min(dp, min);
+    max = Math.max(dp, max);
+  }
+
+  return { min, max };
+}
+
+interface MockPolygon {
+  vertices: XY[];
+  center: XY;
+}
+
+export function checkCollisionBtwnPolygons(p1: MockPolygon, p2: MockPolygon) {
   let overlap = Infinity;
+  let collisionNormal;
 
-  for (let shape = 0; shape < 2; shape++) {
-    if (shape === 1) {
-      const tmp = p1;
-      p1 = p2;
-      p2 = tmp;
-    }
-    for (let i = 0; i < p1.vertices.length; i++) {
-      const normal = Vector.fromPoints(
-        p1.vertices[i],
-        p1.vertices[(i + 1) % p1.vertices.length]
-      ).toRightNormal();
-      normal.normalize();
+  const p1Normals = getNormals(p1.vertices);
+  const p2Normals = getNormals(p2.vertices);
+  const allNormals = p1Normals.concat(p2Normals);
 
-      let minP1 = Infinity;
-      let maxP1 = -Infinity;
-      for (let j = 0; j < p1.vertices.length; j++) {
-        const dp = normal.getDotProduct(p1.vertices[j]);
-        minP1 = Math.min(dp, minP1);
-        maxP1 = Math.max(dp, maxP1);
-      }
+  for (const normal of allNormals) {
+    const p1_1d = projectOntoNormal(p1.vertices, normal);
+    const p2_1d = projectOntoNormal(p2.vertices, normal);
 
-      let minP2 = Infinity;
-      let maxP2 = -Infinity;
-      for (let k = 0; k < p2.vertices.length; k++) {
-        const dp = normal.getDotProduct(p2.vertices[k]);
-        minP2 = Math.min(dp, minP2);
-        maxP2 = Math.max(dp, maxP2);
-      }
+    const prevOverlap = overlap;
+    overlap = Math.min(
+      Math.min(p1_1d.max, p2_1d.max) - Math.max(p1_1d.min, p2_1d.min),
+      overlap
+    );
+    if (overlap != prevOverlap) collisionNormal = normal;
 
-      overlap = Math.min(
-        Math.min(maxP1, maxP2) - Math.max(minP1, minP2),
-        overlap
-      );
-
-      if (!(maxP2 >= minP1 && maxP1 >= minP2)) return null;
-    }
+    if (!(p2_1d.max > p1_1d.min && p1_1d.max > p2_1d.min)) return null;
   }
 
   const displacementVector = Vector.fromPoints(p2.center, p1.center);
@@ -109,5 +119,5 @@ export function checkCollisionBtwnPolygons(
     x: (overlap * displacementVector.x) / magnitude,
     y: (overlap * displacementVector.y) / magnitude,
   };
-  return displacement;
+  return { displacement, collisionNormal };
 }
