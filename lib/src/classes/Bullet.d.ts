@@ -7,7 +7,7 @@ declare const bulletSprites: {
 declare type Action = keyof typeof bulletSprites;
 export default class Bullet extends Entity {
     id: number;
-    speed: 5;
+    speed: number;
     currAction: Action;
     spriteIdx: 0 | 1 | 2 | 3 | 4 | 5 | 6;
     status: 'alive' | 'dieing' | 'dead';

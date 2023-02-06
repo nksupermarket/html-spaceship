@@ -1,5 +1,5 @@
 import { MouseInterface, XY } from '../../types/interfaces';
-import { Axis, Direction } from '../../types/types';
+import { Axis, Direction, Mouse } from '../../types/types';
 import {
   getCollisionBtwnPolygonAndCircle,
   getCollisionBtwnPolygons,
@@ -274,12 +274,20 @@ export default class Spaceship extends Entity {
 
   shoot() {
     if (!this.shotAvailable) return;
-    const { x: xCenter, y: yCenter } = this.getCenter();
+    const center = this.getCenter();
 
     const r = this.height / 2;
-    const x = r * Math.cos(this.angle + Math.PI / 2) + xCenter;
-    const y = r * Math.sin(this.angle + Math.PI / 2) + yCenter;
-    this.bullets.push(new Bullet({ x, y }, { x: x - xCenter, y: y - yCenter }));
+    const x = Math.cos(this.angle + Math.PI / 2);
+    const y = Math.sin(this.angle + Math.PI / 2);
+    this.bullets.push(
+      new Bullet(
+        { x: r * x + center.x, y: r * y + center.y },
+        {
+          x,
+          y,
+        }
+      )
+    );
 
     this.shotAvailable = false;
   }

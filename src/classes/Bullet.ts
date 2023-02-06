@@ -53,8 +53,8 @@ export default class Bullet extends Entity {
 
   constructor({ x, y }: XY, slope: XY) {
     super(x, y, 20, 20);
-    this.speed = 6;
-    this.velocity = { x: slope.x / this.speed, y: slope.y / this.speed };
+    this.speed = 8;
+    this.velocity = { x: slope.x * this.speed, y: slope.y * this.speed };
     this.id = count++;
     this.currAction = 'idle';
     this.spriteIdx = 0;
