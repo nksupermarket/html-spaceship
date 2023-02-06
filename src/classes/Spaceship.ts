@@ -257,10 +257,14 @@ export default class Spaceship extends Entity {
       collision = getCollisionBtwnPolygons(polygon, boundary);
       if (collision) break;
     }
+
     if (!collision) return;
+
     const { displacement, collisionNormal } = collision;
+
     this.updateXPosition(-displacement.x);
     this.updateYPosition(-displacement.y);
+
     if (Math.abs(collisionNormal!.y) > Math.abs(collisionNormal!.x))
       this.velocity.y = -this.velocity.y * DISSIPATION_FACTOR;
     else this.velocity.x = -this.velocity.x * DISSIPATION_FACTOR;

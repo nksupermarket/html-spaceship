@@ -8,9 +8,9 @@ import getStartPos from '../utils/getStartPos';
 import { getTranslateY } from '../utils/misc';
 import BoundaryList from './BoundaryList';
 import KeyPress from './KeyPress';
+import Score from './Score';
 import ShootableList from './ShootableList';
 import Spaceship from './Spaceship';
-import Score from './Score';
 
 export default class GameState {
   spaceship: Spaceship;

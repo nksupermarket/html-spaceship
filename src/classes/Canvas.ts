@@ -27,29 +27,23 @@ export default class Canvas {
     spaceship.bullets.forEach((b) => b.draw(c));
     spaceship.draw(c);
 
+    // draw score
+    const str = score.toString();
+    let zeroes = '';
+    for (let i = 0; i < 10 - str.length; i++) {
+      zeroes += '0';
+    }
+    const totalWidth = c.measureText(zeroes + str).width;
+    const scoreWidth = c.measureText(str).width;
+    const totalMid = totalWidth / 2;
+    const scoreStart = window.innerWidth / 2 + totalMid - scoreWidth;
     c.font = '3em monospace';
     c.globalAlpha = 0.5;
-    c.fillStyle = lightenDarkenColor(this.scoreColor, 80);
-    c.fillText(this.getScoreText(score), window.innerWidth / 2, 30);
     c.fillStyle = this.scoreColor;
-    c.fillText(this.getScoreText(score), 0, 30);
-  }
+    c.fillText(str, scoreStart, 48);
 
-  drawScore() {
-    const c = this.el.getContext('2d');
-    if (!c) return;
-  }
-
-  getScoreText(score: number) {
-    const str = score.toString();
-    const arr = Array(8);
-    for (let i = str.length - 1; i >= 0; i--) {
-      arr[arr.length - 1 - ((str.length - 1 - i) % (arr.length - 1))] = str[i];
-    }
-    for (let i = 0; i < arr.length - str.length - 1; i++) {
-      arr[i] = 0;
-    }
-    return arr.join('');
+    c.globalAlpha = 0.25;
+    c.fillText(zeroes, window.innerWidth / 2 - totalMid, 48);
   }
 
   remove() {

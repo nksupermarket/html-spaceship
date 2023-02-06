@@ -24,7 +24,7 @@ const state: DeactiveState | ActiveState = {
 function animate() {
   if (!state.active) return;
   state.gameState.update();
-  state.canvas.draw(state.gameState.spaceship, state.gameState.displayScore);
+  state.canvas.draw(state.gameState.spaceship, state.gameState.score.display);
   requestAnimationFrame(animate);
 }
 
