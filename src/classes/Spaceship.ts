@@ -176,6 +176,8 @@ export default class Spaceship extends Entity {
           if (value < 0) {
             this.updateYPosition(0 - value);
             this.velocity.y = -this.velocity.y * DISSIPATION_FACTOR;
+            this.resetDeceleration('x');
+            this.resetDeceleration('y');
           }
           break;
         }
@@ -183,6 +185,8 @@ export default class Spaceship extends Entity {
           if (value < 0) {
             this.updateXPosition(0 - value);
             this.velocity.x = -this.velocity.x * DISSIPATION_FACTOR;
+            this.resetDeceleration('x');
+            this.resetDeceleration('y');
           }
           break;
         }
@@ -190,6 +194,8 @@ export default class Spaceship extends Entity {
           if (value > bounds.y) {
             this.updateYPosition(bounds.y - value);
             this.velocity.y = -this.velocity.y * DISSIPATION_FACTOR;
+            this.resetDeceleration('x');
+            this.resetDeceleration('y');
           }
           break;
         }
@@ -197,6 +203,8 @@ export default class Spaceship extends Entity {
           if (value > bounds.x) {
             this.updateXPosition(bounds.x - value);
             this.velocity.x = -this.velocity.x * DISSIPATION_FACTOR;
+            this.resetDeceleration('x');
+            this.resetDeceleration('y');
           }
           break;
         }
@@ -206,6 +214,7 @@ export default class Spaceship extends Entity {
 
   handleCollisionWithCircle(boundary: CircleBoundary) {
     if (
+      boundary.height === 0 ||
       this.x + 200 < boundary.x ||
       this.x > boundary.x + boundary.width + 200 ||
       this.y + 200 < boundary.y ||
@@ -229,10 +238,14 @@ export default class Spaceship extends Entity {
     this.velocity.y -= 2.0 * distanceAlongNormal * collisionNormal.y;
     this.velocity.x *= DISSIPATION_FACTOR;
     this.velocity.y *= DISSIPATION_FACTOR;
+
+    this.resetDeceleration('x');
+    this.resetDeceleration('y');
   }
 
   handleCollisionWithRect(boundary: RectBoundary) {
     if (
+      boundary.height === 0 ||
       this.x + 200 < boundary.x ||
       this.x > boundary.x + boundary.width + 200 ||
       this.y + 200 < boundary.y ||
@@ -251,6 +264,9 @@ export default class Spaceship extends Entity {
     if (Math.abs(collisionNormal!.y) > Math.abs(collisionNormal!.x))
       this.velocity.y = -this.velocity.y * DISSIPATION_FACTOR;
     else this.velocity.x = -this.velocity.x * DISSIPATION_FACTOR;
+
+    this.resetDeceleration('x');
+    this.resetDeceleration('y');
   }
 
   updateXPosition(shift = this.velocity.x) {

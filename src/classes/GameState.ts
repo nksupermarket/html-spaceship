@@ -10,6 +10,7 @@ import BoundaryList from './BoundaryList';
 import KeyPress from './KeyPress';
 import ShootableList from './ShootableList';
 import Spaceship from './Spaceship';
+import Score from './Score';
 
 export default class GameState {
   spaceship: Spaceship;
@@ -20,6 +21,7 @@ export default class GameState {
   scrollBoundary: { top: number; bottom: number };
   readonly REMOVE_CLASS: string;
   readonly ROOT_EL: HTMLElement;
+  score: Score;
 
   constructor(
     removeClass: string,
@@ -46,6 +48,7 @@ export default class GameState {
     };
     this.REMOVE_CLASS = removeClass;
     this.ROOT_EL = rootEl;
+    this.score = new Score();
   }
 
   update() {
@@ -144,6 +147,7 @@ export default class GameState {
     this.spaceship.updateXPosition();
 
     //update state
+    this.score.updateDisplay();
     for (
       let i = Math.max(
         this.shootables.list.length,
@@ -164,18 +168,25 @@ export default class GameState {
             const collision = shootable.circle
               ? checkCollisionBtwnCircles(shootable, bullet)
               : checkIfInsideRect(shootable, bullet);
+            const axis =
+              Math.abs(bullet.velocity.y) > Math.abs(bullet.velocity.x)
+                ? 'y'
+                : 'x';
             if (collision) {
               bullet.onHit();
-              shootable.onHit();
+              shootable.onHit(axis);
             }
           }
         }
       }
 
       if (i < this.shootables.list.length) {
-        this.shootables.list[i].update();
-        if (this.shootables.list[i].lifePoints <= 0)
+        const shootable = this.shootables.list[i];
+        shootable.update();
+        if (shootable.lifePoints <= 0) {
+          this.score.updateTotal(shootable);
           this.shootables.removeEl(i, this.REMOVE_CLASS);
+        }
       }
       if (i < this.boundaries.list.length) {
         const boundary = this.boundaries.list[i];

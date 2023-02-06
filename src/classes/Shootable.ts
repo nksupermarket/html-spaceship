@@ -1,4 +1,5 @@
 import { XY } from '../../types/interfaces';
+import { Axis } from '../../types/types';
 import Entity from './Entity';
 
 export default class Shootable extends Entity {
@@ -22,15 +23,16 @@ export default class Shootable extends Entity {
     this.el.classList.add(className);
   }
 
-  onHit() {
+  onHit(axis: Axis) {
     this.lifePoints -= 10;
-    this.shake();
+    this.shake(axis);
   }
 
-  shake() {
-    this.el.classList.remove('shake');
+  shake(axis: Axis) {
+    const animation = axis === 'y' ? 'quake_y' : 'quake_x';
+    this.el.classList.remove('quake_x', 'quake_y');
     void this.el.offsetWidth;
-    this.el.classList.add('shake');
+    this.el.classList.add(animation);
   }
 
   update() {
