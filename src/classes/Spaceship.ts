@@ -429,7 +429,7 @@ export default class Spaceship extends Entity {
   }
 
   removeBullet(i: number) {
-    this.bullets.slice(i, 1);
+    this.bullets.splice(i, 1);
   }
 
   getVerticesBoundingBox(): XY[] {

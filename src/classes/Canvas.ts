@@ -1,4 +1,3 @@
-import { lightenDarkenColor } from '../utils/misc';
 import Spaceship from './Spaceship';
 
 export default class Canvas {
@@ -38,11 +37,11 @@ export default class Canvas {
     const totalMid = totalWidth / 2;
     const scoreStart = window.innerWidth / 2 + totalMid - scoreWidth;
     c.font = '3em monospace';
-    c.globalAlpha = 0.5;
+    c.globalAlpha = 0.75;
     c.fillStyle = this.scoreColor;
     c.fillText(str, scoreStart, 48);
 
-    c.globalAlpha = 0.25;
+    c.globalAlpha = 0.4;
     c.fillText(zeroes, window.innerWidth / 2 - totalMid, 48);
   }
 

@@ -11,7 +11,10 @@ import KeyPress from './KeyPress';
 import Score from './Score';
 import ShootableList from './ShootableList';
 import Spaceship from './Spaceship';
-
+const bounds = {
+  x: window.innerWidth,
+  y: window.innerHeight,
+};
 export default class GameState {
   spaceship: Spaceship;
   boundaries: BoundaryList;
@@ -139,10 +142,7 @@ export default class GameState {
       this.spaceship.updateYPosition();
     }
 
-    this.spaceship.handleBoundsCollision({
-      x: window.innerWidth,
-      y: window.innerHeight,
-    });
+    this.spaceship.handleBoundsCollision(bounds);
 
     this.spaceship.updateXPosition();
 
@@ -159,9 +159,9 @@ export default class GameState {
     ) {
       if (i < this.spaceship.bullets.length) {
         const bullet = this.spaceship.bullets[i];
-        bullet.update();
         bullet.y -= amountToShift;
-
+        bullet.update(bounds);
+        console.log(bullet.status);
         if (bullet.status === 'dead') this.spaceship.removeBullet(i);
         else if (bullet.status == 'alive') {
           for (const shootable of this.shootables.list) {

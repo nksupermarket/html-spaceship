@@ -18,7 +18,7 @@ export default class Bullet extends Entity {
     increaseSpriteIdx(): void;
     resetSpriteIdx(override?: 'override'): void;
     updateAction(action: Action): void;
-    update(): void;
+    update(bounds: XY): void;
     onHit(): void;
     getCenter(): {
         x: number;

@@ -77,6 +77,7 @@ export default class Bullet extends Entity {
   updatePosition() {
     this.x += this.velocity.x;
     this.y += this.velocity.y;
+    console.log({ x: this.x, y: this.y });
   }
 
   increaseSpriteIdx() {
@@ -96,7 +97,11 @@ export default class Bullet extends Entity {
     this.currAction = action;
   }
 
-  update() {
+  update(bounds: XY) {
+    if (this.x < 0 || this.x > bounds.x || this.y < 0 || this.y > bounds.y) {
+      this.status = 'dead';
+      return;
+    }
     switch (this.status) {
       case 'alive':
         this.updatePosition();
