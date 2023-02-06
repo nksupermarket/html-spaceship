@@ -45,7 +45,7 @@ type Action = keyof typeof bulletSprites;
 
 export default class Bullet extends Entity {
   id: number;
-  speed: 5;
+  speed: number;
   currAction: Action;
   spriteIdx: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   status: 'alive' | 'dieing' | 'dead';
@@ -53,7 +53,7 @@ export default class Bullet extends Entity {
 
   constructor({ x, y }: XY, slope: XY) {
     super(x, y, 20, 20);
-    this.speed = 5;
+    this.speed = 6;
     this.velocity = { x: slope.x / this.speed, y: slope.y / this.speed };
     this.id = count++;
     this.currAction = 'idle';

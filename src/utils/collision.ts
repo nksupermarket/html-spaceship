@@ -4,7 +4,7 @@ import Bullet from '../classes/Bullet';
 import Entity from '../classes/Entity';
 import Shootable from '../classes/Shootable';
 import Vector from '../classes/Vector';
-import { distBtwnTwoPoints, getClosestPoint, sqr } from './math';
+import { getClosestPoint, sqr } from './math';
 
 export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
   const insideY =

@@ -87,6 +87,7 @@ export default class GameState {
     const aboveTopBoundGoingDown =
       this.spaceship.y < this.scrollBoundary.top &&
       this.spaceship.velocity.y > 0;
+
     let amountToShift = 0;
     // bullets need to read this amount to see how much to shift as the root element translateY changes
 
@@ -130,8 +131,6 @@ export default class GameState {
       } else {
         this.ROOT_EL.style.transform = `translateY(${window.scrollY}px)`;
         this.spaceship.updateYPosition();
-
-        amountToShift = Math.abs(translateVal);
       }
     } else if (belowBottomBoundGoingUp || aboveTopBoundGoingDown) {
       this.spaceship.updateYPosition();
@@ -157,6 +156,7 @@ export default class GameState {
       if (i < this.spaceship.bullets.length) {
         const bullet = this.spaceship.bullets[i];
         bullet.update();
+        bullet.y -= amountToShift;
 
         if (bullet.status === 'dead') this.spaceship.removeBullet(i);
         else if (bullet.status == 'alive') {
@@ -187,10 +187,6 @@ export default class GameState {
         boundary.update();
         if (boundary.el.classList.contains(this.REMOVE_CLASS))
           this.boundaries.removeBoundary(i);
-      }
-
-      if (i < this.spaceship.bullets.length) {
-        this.spaceship.bullets[i].y -= amountToShift;
       }
     }
   }
