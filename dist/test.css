@@ -72,3 +72,10 @@ section div {
     transform: rotate(0deg);
   }
 }
+
+.line {
+  width: 500px;
+  height: 13px;
+  background: black;
+  border-radius: 9px;
+}

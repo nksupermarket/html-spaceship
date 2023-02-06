@@ -69,6 +69,8 @@ const drawRoundRect = function (
   }
 };
 
+const DISSIPATION_FACTOR = 0.95;
+
 type DecelerateScalars = Record<Axis, number>;
 export default class Spaceship extends Entity {
   angle: number;
@@ -173,28 +175,28 @@ export default class Spaceship extends Entity {
         case 'top': {
           if (value < 0) {
             this.updateYPosition(0 - value);
-            this.velocity.y = -this.velocity.y;
+            this.velocity.y = -this.velocity.y * DISSIPATION_FACTOR;
           }
           break;
         }
         case 'left': {
           if (value < 0) {
             this.updateXPosition(0 - value);
-            this.velocity.x = -this.velocity.x;
+            this.velocity.x = -this.velocity.x * DISSIPATION_FACTOR;
           }
           break;
         }
         case 'bottom': {
           if (value > bounds.y) {
             this.updateYPosition(bounds.y - value);
-            this.velocity.y = -this.velocity.y;
+            this.velocity.y = -this.velocity.y * DISSIPATION_FACTOR;
           }
           break;
         }
         case 'right': {
           if (value > bounds.x) {
             this.updateXPosition(bounds.x - value);
-            this.velocity.x = -this.velocity.x;
+            this.velocity.x = -this.velocity.x * DISSIPATION_FACTOR;
           }
           break;
         }
@@ -225,6 +227,8 @@ export default class Spaceship extends Entity {
 
     this.velocity.x -= 2.0 * distanceAlongNormal * collisionNormal.x;
     this.velocity.y -= 2.0 * distanceAlongNormal * collisionNormal.y;
+    this.velocity.x *= DISSIPATION_FACTOR;
+    this.velocity.y *= DISSIPATION_FACTOR;
   }
 
   handleCollisionWithRect(boundary: RectBoundary) {
@@ -242,11 +246,11 @@ export default class Spaceship extends Entity {
     }
     if (!collision) return;
     const { displacement, collisionNormal } = collision;
-    this.updateXPosition(displacement.x);
-    this.updateYPosition(displacement.y);
+    this.updateXPosition(-displacement.x);
+    this.updateYPosition(-displacement.y);
     if (Math.abs(collisionNormal!.y) > Math.abs(collisionNormal!.x))
-      this.velocity.y = -this.velocity.y;
-    else this.velocity.x = -this.velocity.x;
+      this.velocity.y = -this.velocity.y * DISSIPATION_FACTOR;
+    else this.velocity.x = -this.velocity.x * DISSIPATION_FACTOR;
   }
 
   updateXPosition(shift = this.velocity.x) {

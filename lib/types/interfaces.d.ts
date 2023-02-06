@@ -14,10 +14,6 @@ export interface MouseInterface {
     x: number | null;
     y: number | null;
 }
-export interface Center {
-    xCenter: number;
-    yCenter: number;
-}
 export interface KeysConfig {
     left: KeyboardEvent['key'];
     right: KeyboardEvent['key'];

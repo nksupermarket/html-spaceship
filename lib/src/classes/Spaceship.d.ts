@@ -1,8 +1,9 @@
-import { Center, MouseInterface, XY } from '../../types/interfaces';
+import { MouseInterface, XY } from '../../types/interfaces';
 import { Axis, Direction } from '../../types/types';
 import { CircleBoundary, RectBoundary } from './boundaries';
 import Bullet from './Bullet';
 import Entity from './Entity';
+import Polygon from './Polygon';
 declare type DecelerateScalars = Record<Axis, number>;
 export default class Spaceship extends Entity {
     angle: number;
@@ -14,8 +15,10 @@ export default class Spaceship extends Entity {
     readonly MAX_SPEED: number;
     velocity: XY;
     readonly IMAGE: HTMLImageElement;
+    readonly CONVEX_POLYGONS: Polygon[];
+    readonly BOUNDING_BOX: Polygon;
+    colliding: boolean;
     constructor({ x, y }: XY, theme: 'dark' | 'light', speed: number);
-    get vertices(): XY[];
     move(dir: Direction): void;
     handleBoundsCollision(bounds: XY): void;
     handleCollisionWithCircle(boundary: CircleBoundary): void;
@@ -23,17 +26,14 @@ export default class Spaceship extends Entity {
     updateXPosition(shift?: number): void;
     updateYPosition(shift?: number): void;
     shoot(): void;
-    getCenter(): Center;
+    getCenter(): XY;
     draw(c: CanvasRenderingContext2D): void;
     drawFlames(c: CanvasRenderingContext2D): void;
     alignToMouse(mouse: MouseInterface): void;
     resetDeceleration(axis: Axis): void;
     decelerate(axis: Axis): void;
     removeBullet(i: number): void;
-    getVertices(angle?: number): XY[];
-    getEdges(): {
-        x: number;
-        y: number;
-    }[][];
+    getVerticesBoundingBox(): XY[];
+    getPolygons(): Polygon[];
 }
 export {};

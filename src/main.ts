@@ -163,6 +163,7 @@ export default function run(config: Config) {
     p.speed,
     p.rootEl
   );
+  p.rootEl.style.transform = 'translateY(0)';
   const eventHandlers = getEventHandlers(p.keys)!;
 
   function preventDefault(e: Event) {
