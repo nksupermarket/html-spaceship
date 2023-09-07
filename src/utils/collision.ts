@@ -1,10 +1,9 @@
-import { XY } from '../../types/interfaces';
-import { CircleBoundary } from '../classes/boundaries';
-import Bullet from '../classes/Bullet';
-import Entity from '../classes/Entity';
-import Shootable from '../classes/Shootable';
-import Vector from '../classes/Vector';
-import { getClosestPoint, sqr } from './math';
+import { XY } from "../../types/interfaces";
+import { BareCircleBoundary, CircleBoundary } from "../classes/boundaries";
+import Entity from "../classes/Entity";
+import Vector from "../classes/Vector";
+import { getCenter } from "./getCenter";
+import { getClosestPoint, sqr } from "./math";
 
 export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
   const insideY =
@@ -18,13 +17,10 @@ export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
   return insideX && insideY;
 }
 
-export function checkCollisionBtwnCircles(
-  c1: Shootable | Bullet,
-  c2: Shootable | Bullet
-) {
+export function checkCollisionBtwnCircles(c1: Entity, c2: Entity) {
   // get distance between centers of circles
-  const { x: x1, y: y1 } = c1.getCenter();
-  const { x: x2, y: y2 } = c2.getCenter();
+  const { x: x1, y: y1 } = getCenter(c1);
+  const { x: x2, y: y2 } = getCenter(c2);
   const distance = Math.sqrt(sqr(x2 - x1) + sqr(y2 - y1));
 
   return distance <= c1.width / 2 + c2.width / 2;
@@ -92,22 +88,18 @@ export function getCollisionBtwnPolygons(p: MockPolygon, p2: MockPolygon) {
   };
 }
 
-type MockCircle = {
-  radius: number;
-  center: XY;
-};
-
-function projectCircle(c: MockCircle, vector: Vector) {
+function projectCircle(c: BareCircleBoundary, vector: Vector) {
   const direction = Vector.fromVector(vector).normalize();
   direction.multiply(c.radius);
+  const { x: centerX, y: centerY } = getCenter(c);
 
   const p1 = {
-    x: c.center.x + direction.x,
-    y: c.center.y + direction.y,
+    x: centerX + direction.x,
+    y: centerY + direction.y,
   };
   const p2 = {
-    x: c.center.x - direction.x,
-    y: c.center.y - direction.y,
+    x: centerX - direction.x,
+    y: centerY - direction.y,
   };
   direction.normalize();
   let min = direction.dot(p1);
@@ -143,8 +135,9 @@ export function getCollisionBtwnPolygonAndCircle(
   }
 
   // see if closest point on polygon intersects circle
-  const closestPoint = getClosestPoint(c.center, p.vertices);
-  const axis = Vector.fromPoints(c.center, closestPoint);
+  const cCenter = getCenter(c);
+  const closestPoint = getClosestPoint(cCenter, p.vertices);
+  const axis = Vector.fromPoints(cCenter, closestPoint);
   const pProj = projectPolygon(p.vertices, axis);
   const cProj = projectCircle(c, axis);
   if (cProj.max < pProj.min || pProj.max < cProj.min) return null;
@@ -156,7 +149,7 @@ export function getCollisionBtwnPolygonAndCircle(
   );
   if (overlap != prevOverlap) collisionNormal = axis;
 
-  const displacementVector = Vector.fromPoints(c.center, p.center);
+  const displacementVector = Vector.fromPoints(cCenter, p.center);
   displacementVector.normalize();
   return {
     displacement: displacementVector.multiply(overlap),

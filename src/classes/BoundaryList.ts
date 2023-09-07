@@ -1,6 +1,6 @@
-import { CircleBoundary, RectBoundary } from './boundaries';
+import { CircleBoundary, RectBoundary } from "./boundaries";
 
-export default class BoundaryList {
+export class BoundaryList {
   list: (CircleBoundary | RectBoundary)[];
 
   constructor() {
@@ -8,9 +8,9 @@ export default class BoundaryList {
   }
 
   getList() {
-    return Array.from(document.querySelectorAll<HTMLElement>('.boundary')).map(
+    return Array.from(document.querySelectorAll<HTMLElement>(".boundary")).map(
       (el) => {
-        return window.getComputedStyle(el).borderRadius === '50%'
+        return window.getComputedStyle(el).borderRadius === "50%"
           ? new CircleBoundary(el)
           : new RectBoundary(el);
       }

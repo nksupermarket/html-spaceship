@@ -1,15 +1,14 @@
-import { XY } from '../../types/interfaces';
-import Entity from './Entity';
+import { XY } from "../../types/interfaces";
+import { NonFunctionPropertyNames } from "../../types/types";
+import Entity from "./Entity";
 
 export default class Boundary extends Entity {
   el: HTMLElement;
-  center: XY;
 
   constructor(el: HTMLElement) {
     const { x, y, height, width } = el.getBoundingClientRect();
     super(x, y, height, width);
     this.el = el;
-    this.center = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
   }
 
   update() {
@@ -19,27 +18,30 @@ export default class Boundary extends Entity {
     this.y = y;
     this.height = height;
     this.width = width;
-    this.center = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
   }
 }
 
 export class CircleBoundary extends Boundary {
-  readonly kind: 'circle';
+  readonly kind: "circle";
   readonly radius: number;
   constructor(el: HTMLElement) {
     super(el);
-    this.kind = 'circle';
+    this.kind = "circle";
     this.radius = this.width / 2;
   }
 }
+export type BareCircleBoundary = Omit<
+  Pick<CircleBoundary, NonFunctionPropertyNames<CircleBoundary>>,
+  "el"
+>;
 
 export class RectBoundary extends Boundary {
-  readonly kind: 'rect';
+  readonly kind: "rect";
   vertices: XY[];
 
   constructor(el: HTMLElement) {
     super(el);
-    this.kind = 'rect';
+    this.kind = "rect";
     this.vertices = [
       {
         x: this.x,
@@ -87,7 +89,9 @@ export class RectBoundary extends Boundary {
         y: this.y + this.height,
       },
     ];
-
-    this.center = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
   }
 }
+export type BareRectBoundary = Omit<
+  Pick<RectBoundary, NonFunctionPropertyNames<RectBoundary>>,
+  "el"
+>;

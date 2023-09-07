@@ -1,30 +1,42 @@
-import { Config, KeysConfig } from '../types/interfaces';
-import Canvas from './classes/Canvas';
-import GameState from './classes/GameState';
-import './style.css';
-import { getTranslateY } from './utils/misc';
-import wrapWords from './wrapWords';
+import {
+  ActiveState,
+  Config,
+  DeactiveState,
+  KeysConfig,
+} from "../types/interfaces";
+import { Canvas } from "./classes/Canvas";
+import GameState from "./classes/GameState";
+import "./style.css";
+import { getTranslateY } from "./utils/misc";
+import wrapWords from "./wrapWords";
 
-interface ActiveState {
-  canvas: Canvas;
-  gameState: GameState;
-  active: true;
-}
-interface DeactiveState {
-  canvas: null;
-  gameState: null;
-  active: false;
-}
 const state: DeactiveState | ActiveState = {
   canvas: null,
-  gameState: null,
+  mouse: null,
+  keyPress: null,
+  boundaries: null,
+  shootables: null,
+  worker: null,
   active: false,
+  spaceshipState: null,
 };
 
 function animate() {
   if (!state.active) return;
-  state.gameState.update();
-  state.canvas.draw(state.gameState.spaceship, state.gameState.score.display);
+  state.worker.postMessage({
+    spaceshipState: state.spaceshipState,
+    mouse: state.mouse,
+    keyPress: state.keyPress,
+    boundaries: state.boundaries.list.map((b) => {
+      let { el, ...rest } = b;
+      return rest;
+    }),
+    shootables: state.shootables.list.map((s) => {
+      let { el, ...rest } = s;
+      return rest;
+    }),
+  });
+  // state.canvas.draw(state.gameState.spaceship, state.gameState.score.display);
   requestAnimationFrame(animate);
 }
 
@@ -35,23 +47,23 @@ const toggleKeyPress =
 
     switch (key) {
       case keysConfig.left: {
-        state.gameState.keyPress.keys.left.pressed = keyIsPressed;
-        state.gameState.spaceship.accelerating = keyIsPressed;
+        state.keyPress.keys.left.pressed = keyIsPressed;
+        state.spaceshipState.accelerating = keyIsPressed;
         break;
       }
       case keysConfig.right: {
-        state.gameState.keyPress.keys.right.pressed = keyIsPressed;
-        state.gameState.spaceship.accelerating = keyIsPressed;
+        state.keyPress.keys.right.pressed = keyIsPressed;
+        state.spaceshipState.accelerating = keyIsPressed;
         break;
       }
       case keysConfig.up: {
-        state.gameState.keyPress.keys.up.pressed = keyIsPressed;
-        state.gameState.spaceship.accelerating = keyIsPressed;
+        state.keyPress.keys.up.pressed = keyIsPressed;
+        state.spaceshipState.accelerating = keyIsPressed;
         break;
       }
       case keysConfig.down: {
-        state.gameState.keyPress.keys.down.pressed = keyIsPressed;
-        state.gameState.spaceship.accelerating = keyIsPressed;
+        state.keyPress.keys.down.pressed = keyIsPressed;
+        state.spaceshipState.accelerating = keyIsPressed;
         break;
       }
     }
@@ -62,33 +74,32 @@ function getEventHandlers(keysConfig: KeysConfig) {
   const onKeyPress = toggleKeyPress(keysConfig, state);
   return {
     resizeCanvas: () => {
-      state.gameState.shootables.list = state.gameState.shootables.getList();
-      state.gameState.boundaries.list = state.gameState.boundaries.getList();
+      state.shootables.list = state.shootables.getList();
+      state.boundaries.list = state.boundaries.getList();
       state.canvas.setCorrectSize();
     },
 
     changeAimPos: (e: MouseEvent) => {
-      state.gameState.mouse.x = e.clientX;
-      state.gameState.mouse.y = e.clientY;
+      state.mouse.x = e.clientX;
+      state.mouse.y = e.clientY;
     },
 
     shoot: (e: MouseEvent) => {
       e.preventDefault();
-      state.gameState.keyPress.keys.click.pressed = true;
-      if (!state.gameState.keyPress.keys.click.timer)
-        state.gameState.keyPress.setTimer(
-          'click',
-          () => (state.gameState.spaceship.shotAvailable = true),
+      state.keyPress.keys.click.pressed = true;
+      if (!state.keyPress.keys.click.timer)
+        state.keyPress.setTimer(
+          "click",
+          () => (state.spaceshipState.shotAvailable = true),
           250
         );
     },
 
     resetShoot: (e: MouseEvent) => {
       e.preventDefault();
-      state.gameState.spaceship.shotAvailable = true;
-      state.gameState.keyPress.keys.click.pressed = false;
-      if (state.gameState.keyPress.keys.click.timer)
-        state.gameState.keyPress.removeTimer();
+      state.spaceshipState.shotAvailable = true;
+      state.keyPress.keys.click.pressed = false;
+      if (state.keyPress.keys.click.timer) state.keyPress.removeTimer();
     },
 
     handleKeyPress: (e: KeyboardEvent) => {
@@ -104,20 +115,20 @@ function getEventHandlers(keysConfig: KeysConfig) {
 let keysConfigHandler = {
   get: function (target: KeysConfig, name: string) {
     switch (name) {
-      case 'left': {
-        return target[name] || 'a';
+      case "left": {
+        return target[name] || "a";
       }
-      case 'right': {
-        return target[name] || 'd';
+      case "right": {
+        return target[name] || "d";
       }
-      case 'up': {
-        return target[name] || 'w';
+      case "up": {
+        return target[name] || "w";
       }
-      case 'down': {
-        return target[name] || 's';
+      case "down": {
+        return target[name] || "s";
       }
-      case 'deactivate': {
-        return target[name] || ' ';
+      case "deactivate": {
+        return target[name] || " ";
       }
     }
   },
@@ -126,19 +137,19 @@ let keysConfigHandler = {
 let configHandler = {
   get: function (target: Config, name: keyof Config) {
     switch (name) {
-      case 'keys': {
+      case "keys": {
         return target[name] || new Proxy({} as KeysConfig, keysConfigHandler);
       }
-      case 'wrapWordsClass': {
+      case "wrapWordsClass": {
         return target[name] || undefined;
       }
-      case 'theme': {
-        return target[name] || 'light';
+      case "theme": {
+        return target[name] || "light";
       }
-      case 'speed': {
+      case "speed": {
         return target[name] || 10;
       }
-      case 'rootEl': {
+      case "rootEl": {
         return target[name] || document.body;
       }
       default: {
@@ -152,7 +163,7 @@ export default function run(config: Config) {
   const p = new Proxy(config, configHandler) as Required<Config>;
   if (state.active) return;
   if (p.wrapWordsClass) wrapWords(p.wrapWordsClass);
-  document.documentElement.style.overflow = 'hidden';
+  document.documentElement.style.overflow = "hidden";
 
   const proxy = state as unknown as ActiveState;
   proxy.active = true;
@@ -163,27 +174,27 @@ export default function run(config: Config) {
     p.speed,
     p.rootEl
   );
-  p.rootEl.style.transform = 'translateY(0)';
+  p.rootEl.style.transform = "translateY(0)";
   const eventHandlers = getEventHandlers(p.keys)!;
 
   function preventDefault(e: Event) {
     e.preventDefault();
   }
 
-  window.addEventListener('resize', eventHandlers.resizeCanvas);
+  window.addEventListener("resize", eventHandlers.resizeCanvas);
 
-  window.addEventListener('mousemove', eventHandlers.changeAimPos);
-  window.addEventListener('mousedown', eventHandlers.shoot);
-  window.addEventListener('mouseup', eventHandlers.resetShoot);
+  window.addEventListener("mousemove", eventHandlers.changeAimPos);
+  window.addEventListener("mousedown", eventHandlers.shoot);
+  window.addEventListener("mouseup", eventHandlers.resetShoot);
 
-  window.addEventListener('keydown', eventHandlers.handleKeyPress);
-  window.addEventListener('keyup', eventHandlers.handleKeyUp);
+  window.addEventListener("keydown", eventHandlers.handleKeyPress);
+  window.addEventListener("keyup", eventHandlers.handleKeyUp);
 
-  window.addEventListener('contextmenu', preventDefault);
+  window.addEventListener("contextmenu", preventDefault);
 
   animate();
 
-  window.addEventListener('keydown', function deactivate(e) {
+  window.addEventListener("keydown", function deactivate(e) {
     if (e.key != p.keys.deactivate) return;
     e.preventDefault();
 
@@ -192,23 +203,23 @@ export default function run(config: Config) {
     state.canvas = null;
     state.gameState = null;
 
-    window.removeEventListener('resize', eventHandlers.resizeCanvas);
-    window.removeEventListener('mousemove', eventHandlers.changeAimPos);
-    window.removeEventListener('mousedown', eventHandlers.shoot);
-    window.removeEventListener('mouseup', eventHandlers.resetShoot);
-    window.removeEventListener('keydown', eventHandlers.handleKeyPress);
-    window.removeEventListener('keyup', eventHandlers.handleKeyUp);
-    window.removeEventListener('contextmenu', preventDefault);
+    window.removeEventListener("resize", eventHandlers.resizeCanvas);
+    window.removeEventListener("mousemove", eventHandlers.changeAimPos);
+    window.removeEventListener("mousedown", eventHandlers.shoot);
+    window.removeEventListener("mouseup", eventHandlers.resetShoot);
+    window.removeEventListener("keydown", eventHandlers.handleKeyPress);
+    window.removeEventListener("keyup", eventHandlers.handleKeyUp);
+    window.removeEventListener("contextmenu", preventDefault);
 
-    window.removeEventListener('keydown', deactivate);
+    window.removeEventListener("keydown", deactivate);
 
     document
       .querySelectorAll(`.${config.removedClass}`)
       .forEach((el) => el.classList.remove(config.removedClass));
-    document.documentElement.style.overflow = 'scroll';
+    document.documentElement.style.overflow = "scroll";
 
     const translateVal = getTranslateY(p.rootEl);
-    p.rootEl.style.transform = '';
+    p.rootEl.style.transform = "";
     window.scrollTo(0, -translateVal + window.scrollY);
 
     config.onRemove && config.onRemove();

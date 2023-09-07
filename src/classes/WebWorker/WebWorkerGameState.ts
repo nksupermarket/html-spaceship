@@ -1,67 +1,61 @@
-import { Direction, Mouse } from "../../types/types";
+import { XY } from "../../../types/interfaces";
+import { Direction, Mouse } from "../../../types/types";
 import {
   checkCollisionBtwnCircles,
   checkIfInsideRect,
-} from "../utils/collision";
-import { DIRECTIONS } from "../utils/constants";
-import getStartPos from "../utils/getStartPos";
-import { getTranslateY } from "../utils/misc";
-import { BoundaryList } from "./BoundaryList";
-import KeyPress from "./KeyPress";
-import Score from "./Score";
-import ShootableList from "./ShootableList";
-import { Spaceship } from "./Spaceship";
+} from "../../utils/collision";
+import { DIRECTIONS } from "../../utils/constants";
+import { BareCircleBoundary, BareRectBoundary } from "../boundaries";
+import KeyPress from "../KeyPress";
+import Score from "../Score";
+import { BareShootable } from "../Shootable";
+import Spaceship from "../Spaceship";
+
 const bounds = {
   x: window.innerWidth,
   y: window.innerHeight,
 };
-export default class GameState {
+export class WebWorkerGameState {
   spaceship: Spaceship;
-  boundaries: BoundaryList;
-  shootables: ShootableList;
-  mouse: Mouse;
-  keyPress: KeyPress;
   scrollBoundary: { top: number; bottom: number };
-  readonly REMOVE_CLASS: string;
-  readonly ROOT_EL: HTMLElement;
   score: Score;
 
   constructor(
-    removeClass: string,
-    theme: "light" | "dark",
-    speed: number,
-    rootEl: HTMLElement
+    spaceShipConfig: {
+      theme: "light" | "dark";
+      speed: number;
+      startPos: XY;
+    },
+    scrollBoundary: { top: number; bottom: number }
   ) {
-    this.scrollBoundary = {
-      // local minima/maxima that triggers a scroll upon contact
-      top: window.innerHeight * 0.3,
-      bottom: window.innerHeight * 0.7,
-    };
-    this.boundaries = new BoundaryList();
+    // local minima/maxima that triggers a scroll upon contact
+    this.scrollBoundary = scrollBoundary;
+
     this.spaceship = new Spaceship(
-      getStartPos(this.boundaries.list),
-      theme,
-      speed
+      spaceShipConfig.startPos,
+      spaceShipConfig.theme,
+      spaceShipConfig.speed
     );
-    this.shootables = new ShootableList();
-    this.keyPress = new KeyPress();
-    this.mouse = {
-      x: null,
-      y: null,
-    };
-    this.REMOVE_CLASS = removeClass;
-    this.ROOT_EL = rootEl;
     this.score = new Score();
   }
 
-  update() {
-    this.spaceship.alignToMouse(this.mouse);
+  update(
+    mouse: Mouse,
+    keyPress: KeyPress,
+    rootElTranslateYValue: number,
+    distanceFromTopViewportToBottomOfDoc: number,
+    yPosOfPage: number,
+    scrollY: number,
+    shootables: BareShootable[],
+    boundaries: (BareCircleBoundary | BareRectBoundary)[]
+  ) {
+    this.spaceship.alignToMouse(mouse);
     // handle key press
     let dir: Direction;
     let xAxisPressed = false;
     let yAxisPressed = false;
     for (dir of DIRECTIONS) {
-      if (this.keyPress.keys[dir].pressed) {
+      if (keyPress.keys[dir].pressed) {
         this.spaceship.move(dir);
         if (dir === "right" || dir === "left") xAxisPressed = true;
         else yAxisPressed = true;
@@ -70,22 +64,17 @@ export default class GameState {
     if (!yAxisPressed) this.spaceship.decelerate("y");
     if (!xAxisPressed) this.spaceship.decelerate("x");
 
-    if (this.keyPress.keys.click.pressed) this.spaceship.shoot();
+    if (keyPress.keys.click.pressed) this.spaceship.shoot();
 
     // handle scroll
-    const distanceFromTopViewportToBottomOfDoc = Math.floor(
-      document.documentElement.scrollHeight - window.innerHeight
-    );
-    const translateVal = getTranslateY(this.ROOT_EL);
-    const yPos = Math.floor(translateVal * -1) + window.scrollY;
     const inBetweenScrollBoundaries =
       this.spaceship.y + this.spaceship.velocity.y > this.scrollBoundary.top &&
       this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.bottom;
     const inFirstScreenGoingUp =
-      yPos <= 0 &&
+      yPosOfPage <= 0 &&
       this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.bottom;
     const inLastScreenGoingDown =
-      yPos >= distanceFromTopViewportToBottomOfDoc &&
+      yPosOfPage >= distanceFromTopViewportToBottomOfDoc &&
       this.spaceship.y + this.spaceship.velocity.y > this.scrollBoundary.top;
     const belowBottomBoundGoingUp =
       this.spaceship.y > this.scrollBoundary.bottom &&
@@ -97,6 +86,7 @@ export default class GameState {
     let amountToShift = 0;
     // bullets need to read this amount to see how much to shift as the root element translateY changes
 
+    let newRootElTranslateValue = 0;
     if (
       inBetweenScrollBoundaries ||
       inFirstScreenGoingUp ||
@@ -108,20 +98,18 @@ export default class GameState {
       this.spaceship.y < this.scrollBoundary.bottom &&
       this.spaceship.y + this.spaceship.velocity.y > this.scrollBoundary.bottom
     ) {
-      const newTranslateVal = translateVal - this.spaceship.velocity.y;
-
       if (
         //if spaceship is above the bottom
-        yPos + this.spaceship.velocity.y <
+        yPosOfPage + this.spaceship.velocity.y <
         distanceFromTopViewportToBottomOfDoc
       ) {
-        this.ROOT_EL.style.transform = `translateY(${newTranslateVal}px)`;
+        newRootElTranslateValue =
+          rootElTranslateYValue - this.spaceship.velocity.y;
         amountToShift = this.spaceship.velocity.y;
       } else {
         // need to set the translate value of root element to distanceFromTopViewportToBottomOfDoc bc that's what we read to see if the spaceship can cross the bottom scrollBoundary
-        this.ROOT_EL.style.transform = `translateY(${-Math.ceil(
-          distanceFromTopViewportToBottomOfDoc - window.scrollY
-        )}px)`;
+        newRootElTranslateValue =
+          distanceFromTopViewportToBottomOfDoc - scrollY;
         this.spaceship.updateYPosition();
       }
     } else if (
@@ -129,13 +117,12 @@ export default class GameState {
       this.spaceship.y > this.scrollBoundary.top &&
       this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.top
     ) {
-      const newTranslateVal = translateVal - this.spaceship.velocity.y;
-      if (newTranslateVal < window.scrollY) {
-        this.ROOT_EL.style.transform = `translateY(${newTranslateVal}px)`;
-
+      newRootElTranslateValue =
+        rootElTranslateYValue - this.spaceship.velocity.y;
+      if (newRootElTranslateValue < scrollY) {
         amountToShift = this.spaceship.velocity.y;
       } else {
-        this.ROOT_EL.style.transform = `translateY(${window.scrollY}px)`;
+        newRootElTranslateValue = scrollY;
         this.spaceship.updateYPosition();
       }
     } else if (belowBottomBoundGoingUp || aboveTopBoundGoingDown) {
@@ -148,10 +135,11 @@ export default class GameState {
 
     //update state
     this.score.updateDisplay();
+    let shootablesHitAxis = Array(shootables.length).fill(undefined);
     for (
       let i = Math.max(
-        this.shootables.list.length,
-        this.boundaries.list.length,
+        shootables.length,
+        boundaries.length,
         this.spaceship.bullets.length
       );
       i >= 0;
@@ -161,9 +149,11 @@ export default class GameState {
         const bullet = this.spaceship.bullets[i];
         bullet.y -= amountToShift;
         bullet.update(bounds);
+        console.log(bullet.status);
         if (bullet.status === "dead") this.spaceship.removeBullet(i);
         else if (bullet.status == "alive") {
-          for (const shootable of this.shootables.list) {
+          for (const j in shootables) {
+            const shootable = shootables[j];
             const collision = shootable.circle
               ? checkCollisionBtwnCircles(shootable, bullet)
               : checkIfInsideRect(shootable, bullet);
@@ -173,30 +163,10 @@ export default class GameState {
                 : "x";
             if (collision) {
               bullet.onHit();
-              shootable.onHit(axis);
+              shootablesHitAxis[j] = axis;
             }
           }
         }
-      }
-
-      if (i < this.shootables.list.length) {
-        const shootable = this.shootables.list[i];
-        shootable.update();
-        if (shootable.lifePoints <= 0) {
-          this.score.updateTotal(shootable);
-          this.shootables.removeEl(i, this.REMOVE_CLASS);
-        }
-      }
-      if (i < this.boundaries.list.length) {
-        const boundary = this.boundaries.list[i];
-
-        if (boundary.kind === "circle")
-          this.spaceship.handleCollisionWithCircle(boundary);
-        else this.spaceship.handleCollisionWithRect(boundary);
-
-        boundary.update();
-        if (boundary.el.classList.contains(this.REMOVE_CLASS))
-          this.boundaries.removeBoundary(i);
       }
     }
   }
