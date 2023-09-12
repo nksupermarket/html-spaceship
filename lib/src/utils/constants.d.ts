@@ -5,4 +5,3 @@ export declare const SS_DIMENSIONS: {
     height: number;
     width: number;
 };
-export declare const BUFFER_ZONE = 200;

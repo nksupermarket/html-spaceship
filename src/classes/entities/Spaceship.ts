@@ -16,7 +16,7 @@ function easeInCirc(x: number): number {
 }
 
 const drawRoundRect = function (
-  c: CanvasRenderingContext2D,
+  c: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D,
   x: number,
   y: number,
   width: number,
@@ -306,7 +306,7 @@ export default class Spaceship extends Entity {
     return { x, y };
   }
 
-  draw(c: CanvasRenderingContext2D) {
+  draw(c: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D) {
     const { x: xCenter, y: yCenter } = this.getCenter();
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.translate(xCenter, yCenter);
@@ -325,7 +325,7 @@ export default class Spaceship extends Entity {
     }
   }
 
-  drawFlames(c: CanvasRenderingContext2D) {
+  drawFlames(c: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D) {
     const { x: xCenter, y: yCenter } = this.getCenter();
 
     c.setTransform(1, 0, 0, 1, 0, 0);

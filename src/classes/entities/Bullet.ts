@@ -43,7 +43,7 @@ const bulletSprites = {
 
 type Action = keyof typeof bulletSprites;
 
-const BULLET_SIZE = 20;
+export const BULLET_SIZE = 20;
 const BULLET_SPEED = 8;
 
 export default class Bullet extends Entity {
@@ -64,7 +64,7 @@ export default class Bullet extends Entity {
     this.status = "alive";
   }
 
-  draw(c: CanvasRenderingContext2D) {
+  draw(c: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D) {
     if (this.status === "dead") return;
     c.drawImage(
       bulletSprites[this.currAction][this.spriteIdx],

@@ -9,7 +9,7 @@
     "sourceMap": true,
     "outDir": "./lib",
     "strict": true,
-    "types": ["node", "jest"],
+    "types": ["node", "jest", "@types/offscreencanvas"],
     "esModuleInterop": true
   }
 }

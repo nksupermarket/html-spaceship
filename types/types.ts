@@ -1,5 +1,7 @@
 export type Direction = "left" | "right" | "up" | "down";
 
+export type Dimensions = { width: number; height: number };
+
 export type Axis = "x" | "y";
 
 export type Mouse = Record<Axis, null | number>;

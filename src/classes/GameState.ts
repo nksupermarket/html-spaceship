@@ -12,6 +12,8 @@ import Score from "./Score";
 import Spaceship from "./entities/Spaceship";
 import BoundaryList from "./lists/BoundaryList";
 import ShootableList from "./lists/ShootableList";
+import { BULLET_SIZE } from "./entities/Bullet";
+
 const bounds = {
   x: window.innerWidth,
   y: window.innerHeight,
@@ -85,6 +87,7 @@ export default class GameState {
       this.scrollBoundary.bottom;
     const hittingTopScrollBound =
       this.spaceship.y + this.spaceship.velocity.y < this.scrollBoundary.top;
+
     const inFirstScreen = yPos <= 0;
     const inLastScreen = yPos >= distanceFromTopViewportToBottomOfDoc;
 
