@@ -1,4 +1,4 @@
-import { Axis, NonFunctionPropertyNames } from "../../types/types";
+import { Axis, NonFunctionPropertyNames } from "../../../types/types";
 import Entity from "./Entity";
 
 export default class Shootable extends Entity {

@@ -1,6 +1,5 @@
-import { XY } from '../../types/interfaces';
-import { Axis } from '../../types/types';
-import Entity from './Entity';
+import { Axis, NonFunctionPropertyNames } from "../../types/types";
+import Entity from "./Entity";
 export default class Shootable extends Entity {
     lifePoints: number;
     el: HTMLElement;
@@ -10,5 +9,5 @@ export default class Shootable extends Entity {
     onHit(axis: Axis): void;
     shake(axis: Axis): void;
     update(): void;
-    getCenter(): XY;
 }
+export declare type BareShootable = Omit<Pick<Shootable, NonFunctionPropertyNames<Shootable>>, "el">;

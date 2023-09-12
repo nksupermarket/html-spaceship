@@ -1,6 +1,15 @@
-import { CircleBoundary, RectBoundary } from "./boundaries";
+import { List } from "../../../types/interfaces";
+import {
+  BareCircleBoundary,
+  BareRectBoundary,
+  CircleBoundary,
+  RectBoundary,
+} from "../entities/boundaries";
 
-export class BoundaryList {
+export class BoundaryList
+  implements
+    List<CircleBoundary | RectBoundary, BareRectBoundary | BareCircleBoundary>
+{
   list: (CircleBoundary | RectBoundary)[];
 
   constructor() {
@@ -19,5 +28,12 @@ export class BoundaryList {
 
   removeBoundary(i: number) {
     this.list.splice(i, 1);
+  }
+
+  convertToBare() {
+    return this.list.map((s) => {
+      let { el, ...rest } = s;
+      return rest;
+    });
   }
 }

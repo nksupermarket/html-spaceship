@@ -1,14 +1,16 @@
-import { XY } from "../../types/interfaces";
-import { NonFunctionPropertyNames } from "../../types/types";
+import { XY } from "../../../types/interfaces";
+import { NonFunctionPropertyNames } from "../../../types/types";
 import Entity from "./Entity";
 
 export default class Boundary extends Entity {
   el: HTMLElement;
+  center: XY;
 
   constructor(el: HTMLElement) {
     const { x, y, height, width } = el.getBoundingClientRect();
     super(x, y, height, width);
     this.el = el;
+    this.center = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
   }
 
   update() {
@@ -18,6 +20,7 @@ export default class Boundary extends Entity {
     this.y = y;
     this.height = height;
     this.width = width;
+    this.center = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
   }
 }
 
@@ -89,6 +92,8 @@ export class RectBoundary extends Boundary {
         y: this.y + this.height,
       },
     ];
+
+    this.center = { x: this.x + this.width / 2, y: this.y + this.height / 2 };
   }
 }
 export type BareRectBoundary = Omit<

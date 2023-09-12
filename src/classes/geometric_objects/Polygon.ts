@@ -1,4 +1,4 @@
-import { XY } from '../../types/interfaces';
+import { XY } from "../../../types/interfaces";
 
 export default class Polygon {
   vertices: XY[];

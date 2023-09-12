@@ -1,3 +1,3 @@
-import { Config } from '../types/interfaces';
-import './style.css';
-export default function run(config: Config): void;
+import { Config } from "../types/interfaces";
+import "./style.css";
+export default function run(config: Config): Promise<void>;

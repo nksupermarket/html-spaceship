@@ -1,4 +1,4 @@
-import { XY } from '../../types/interfaces';
+import { XY } from "../../types/interfaces";
 
 export function getTranslateY(el: HTMLElement) {
   const style = window.getComputedStyle(el);
@@ -10,6 +10,12 @@ export function createImage(src: string) {
   const image = new Image();
   image.src = src;
   return image;
+}
+
+export async function createImageBlob(src: string) {
+  const res = await fetch(src);
+  const blob = await res.blob();
+  return blob;
 }
 
 export function getExtremities(vertices: XY[]) {

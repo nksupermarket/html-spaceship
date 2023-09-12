@@ -1,44 +1,6 @@
-import { BoundaryList } from "../src/classes/BoundaryList";
-import Canvas from "../src/classes/Canvas";
-import KeyPress from "../src/classes/KeyPress";
-import ShootableList from "../src/classes/ShootableList";
-import { SpaceShipEventState } from "../src/classes/Spaceship";
-import { Mouse } from "./types";
-
-export interface ActiveState {
-  canvas: Canvas;
-  mouse: Mouse;
-  boundaries: BoundaryList;
-  shootables: ShootableList;
-  keyPress: KeyPress;
-  worker: Worker;
-  active: true;
-  spaceShipState: SpaceShipEventState;
-}
-
-export interface DeactiveState {
-  canvas: null;
-  mouse: null;
-  boundaries: null;
-  shootables: null;
-  keyPress: null;
-  worker: null;
-  active: false;
-  spaceShipState: null;
-}
-
 export interface XY {
   x: number;
   y: number;
-}
-export interface BaseEntity extends XY {
-  height: number;
-  width: number;
-}
-
-export interface Entity extends BaseEntity {
-  velocity: XY;
-  speed: number;
 }
 
 export interface MouseInterface {
@@ -55,6 +17,7 @@ export interface KeysConfig {
 }
 
 export interface Config {
+  workerDir: string;
   keys?: KeysConfig;
   wrapWordsClass?: string;
   theme?: "dark" | "light";
@@ -62,4 +25,10 @@ export interface Config {
   onRemove?: () => void;
   speed?: number;
   rootEl?: HTMLElement;
+}
+
+export interface List<T, K> {
+  list: T[];
+  getList: () => T[];
+  convertToBare: () => K[];
 }

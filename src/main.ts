@@ -1,43 +1,62 @@
-import {
-  ActiveState,
-  Config,
-  DeactiveState,
-  KeysConfig,
-} from "../types/interfaces";
+import { Config, KeysConfig } from "../types/interfaces";
+import { ActiveState, Deactive, Direction } from "../types/types";
 import { Canvas } from "./classes/Canvas";
-import GameState from "./classes/GameState";
+import { Spaceship } from "./classes/entities/Spaceship";
+import { BoundaryList } from "./classes/lists/BoundaryList";
+import { ShootableList } from "./classes/lists/ShootableList";
 import "./style.css";
-import { getTranslateY } from "./utils/misc";
+import { createImageBlob, getTranslateY } from "./utils/misc";
 import wrapWords from "./wrapWords";
 
-const state: DeactiveState | ActiveState = {
+type DeactiveState = Deactive<ActiveState>;
+let state: DeactiveState | ActiveState = {
   canvas: null,
-  mouse: null,
-  keyPress: null,
   boundaries: null,
   shootables: null,
   worker: null,
   active: false,
-  spaceshipState: null,
+  rootEl: null,
 };
 
-function animate() {
-  if (!state.active) return;
-  state.worker.postMessage({
-    spaceshipState: state.spaceshipState,
-    mouse: state.mouse,
-    keyPress: state.keyPress,
-    boundaries: state.boundaries.list.map((b) => {
-      let { el, ...rest } = b;
-      return rest;
-    }),
-    shootables: state.shootables.list.map((s) => {
-      let { el, ...rest } = s;
-      return rest;
-    }),
-  });
-  // state.canvas.draw(state.gameState.spaceship, state.gameState.score.display);
-  requestAnimationFrame(animate);
+function update() {
+  setInterval(() => {
+    if (!state.active) return;
+
+    state.worker.postMessage({
+      event: "update",
+      scrollY: window.scrollY,
+      rootElTranslateYValue: getTranslateY(state.rootEl),
+      distanceFromTopViewportToBottomOfDoc: Math.floor(
+        document.documentElement.scrollHeight - window.innerHeight
+      ),
+      boundaries: state.boundaries.convertToBare(),
+      shootables: state.shootables.convertToBare(),
+    });
+    for (
+      let i = Math.max(
+        state.shootables.list.length,
+        state.boundaries.list.length
+      );
+      i >= 0;
+      i--
+    ) {
+      if (i < state.shootables.list.length) {
+        const shootable = state.shootables.list[i];
+        shootable.update();
+        if (shootable.lifePoints <= 0) {
+          // state.score.updateTotal(shootable);
+          // state.shootables.removeEl(i, state.REMOVE_CLASS);
+        }
+      }
+      if (i < state.boundaries.list.length) {
+        const boundary = state.boundaries.list[i];
+
+        boundary.update();
+        // if (boundary.el.classList.contains(state.REMOVE_CLASS))
+        //   state.boundaries.removeBoundary(i);
+      }
+    }
+  }, 15);
 }
 
 const toggleKeyPress =
@@ -45,61 +64,65 @@ const toggleKeyPress =
   (key: string, keyIsPressed: boolean) => {
     if (!state.active) return;
 
+    function sendKeyPressToWorker(direction: Direction) {
+      state.worker?.postMessage({
+        event: "key toggle",
+        direction,
+        isPressed: keyIsPressed,
+      });
+    }
     switch (key) {
       case keysConfig.left: {
-        state.keyPress.keys.left.pressed = keyIsPressed;
-        state.spaceshipState.accelerating = keyIsPressed;
+        sendKeyPressToWorker("left");
         break;
       }
       case keysConfig.right: {
-        state.keyPress.keys.right.pressed = keyIsPressed;
-        state.spaceshipState.accelerating = keyIsPressed;
+        sendKeyPressToWorker("right");
         break;
       }
       case keysConfig.up: {
-        state.keyPress.keys.up.pressed = keyIsPressed;
-        state.spaceshipState.accelerating = keyIsPressed;
+        sendKeyPressToWorker("up");
         break;
       }
       case keysConfig.down: {
-        state.keyPress.keys.down.pressed = keyIsPressed;
-        state.spaceshipState.accelerating = keyIsPressed;
+        sendKeyPressToWorker("down");
         break;
       }
     }
   };
 
 function getEventHandlers(keysConfig: KeysConfig) {
-  if (!state.active) return;
   const onKeyPress = toggleKeyPress(keysConfig, state);
   return {
-    resizeCanvas: () => {
-      state.shootables.list = state.shootables.getList();
-      state.boundaries.list = state.boundaries.getList();
-      state.canvas.setCorrectSize();
+    resize: () => {
+      state.shootables!.list = state.shootables!.getList();
+      state.boundaries!.list = state.boundaries!.getList();
+      // state.canvas?.setCorrectSize();
+      state.worker!.postMessage({
+        event: "resize",
+        dimensions: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+      });
     },
 
     changeAimPos: (e: MouseEvent) => {
-      state.mouse.x = e.clientX;
-      state.mouse.y = e.clientY;
+      state.worker?.postMessage({
+        event: "mouse",
+        pos: { x: e.clientX, y: e.clientY },
+      });
     },
 
     shoot: (e: MouseEvent) => {
       e.preventDefault();
-      state.keyPress.keys.click.pressed = true;
-      if (!state.keyPress.keys.click.timer)
-        state.keyPress.setTimer(
-          "click",
-          () => (state.spaceshipState.shotAvailable = true),
-          250
-        );
+      state.worker?.postMessage({ event: "shoot" });
     },
 
     resetShoot: (e: MouseEvent) => {
+      if (!state.active) return;
       e.preventDefault();
-      state.spaceshipState.shotAvailable = true;
-      state.keyPress.keys.click.pressed = false;
-      if (state.keyPress.keys.click.timer) state.keyPress.removeTimer();
+      state.worker?.postMessage({ event: "reset shoot" });
     },
 
     handleKeyPress: (e: KeyboardEvent) => {
@@ -159,20 +182,46 @@ let configHandler = {
   },
 };
 
-export default function run(config: Config) {
+export default async function run(config: Config) {
   const p = new Proxy(config, configHandler) as Required<Config>;
   if (state.active) return;
   if (p.wrapWordsClass) wrapWords(p.wrapWordsClass);
   document.documentElement.style.overflow = "hidden";
 
-  const proxy = state as unknown as ActiveState;
-  proxy.active = true;
-  proxy.canvas = new Canvas();
-  proxy.gameState = new GameState(
-    config.removedClass,
-    p.theme,
-    p.speed,
-    p.rootEl
+  state = {
+    active: true,
+    canvas: new Canvas(),
+    boundaries: new BoundaryList(),
+    shootables: new ShootableList(),
+    worker: new Worker(`${p.workerDir}/webWorker.js`, {
+      type: "module",
+    }),
+    rootEl: config.rootEl || document.body,
+  };
+
+  const spaceshipImage = await createImageBitmap(
+    await createImageBlob(
+      p.theme === "light"
+        ? require("./assets/optimized/rocket-lightmode.png").default
+        : require("./assets/optimized/rocket-darkmode.png").default
+    )
+  );
+  const offscreen = state.canvas.el.transferControlToOffscreen();
+  state.worker.postMessage(
+    {
+      event: "init",
+      offscreen,
+      spaceshipConfig: {
+        speed: 10,
+        image: spaceshipImage,
+        startPos: Spaceship.getStartPos(state.boundaries.list),
+      },
+      windowDimensions: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+    },
+    [offscreen]
   );
   p.rootEl.style.transform = "translateY(0)";
   const eventHandlers = getEventHandlers(p.keys)!;
@@ -181,47 +230,65 @@ export default function run(config: Config) {
     e.preventDefault();
   }
 
-  window.addEventListener("resize", eventHandlers.resizeCanvas);
+  state.worker.onmessage = (msg) => {
+    const { data } = msg;
 
-  window.addEventListener("mousemove", eventHandlers.changeAimPos);
-  window.addEventListener("mousedown", eventHandlers.shoot);
-  window.addEventListener("mouseup", eventHandlers.resetShoot);
+    switch (data.event) {
+      case "initiated": {
+        window.addEventListener("resize", eventHandlers.resize);
 
-  window.addEventListener("keydown", eventHandlers.handleKeyPress);
-  window.addEventListener("keyup", eventHandlers.handleKeyUp);
+        window.addEventListener("mousemove", eventHandlers.changeAimPos);
+        window.addEventListener("mousedown", eventHandlers.shoot);
+        window.addEventListener("mouseup", eventHandlers.resetShoot);
 
-  window.addEventListener("contextmenu", preventDefault);
+        window.addEventListener("keydown", eventHandlers.handleKeyPress);
+        window.addEventListener("keyup", eventHandlers.handleKeyUp);
 
-  animate();
+        window.addEventListener("contextmenu", preventDefault);
 
-  window.addEventListener("keydown", function deactivate(e) {
-    if (e.key != p.keys.deactivate) return;
-    e.preventDefault();
+        update();
 
-    proxy.canvas?.remove();
-    state.active = false;
-    state.canvas = null;
-    state.gameState = null;
+        window.addEventListener("keydown", function deactivate(e) {
+          if (e.key != p.keys.deactivate) return;
+          e.preventDefault();
 
-    window.removeEventListener("resize", eventHandlers.resizeCanvas);
-    window.removeEventListener("mousemove", eventHandlers.changeAimPos);
-    window.removeEventListener("mousedown", eventHandlers.shoot);
-    window.removeEventListener("mouseup", eventHandlers.resetShoot);
-    window.removeEventListener("keydown", eventHandlers.handleKeyPress);
-    window.removeEventListener("keyup", eventHandlers.handleKeyUp);
-    window.removeEventListener("contextmenu", preventDefault);
+          state.canvas?.remove();
+          state = {
+            canvas: null,
+            boundaries: null,
+            shootables: null,
+            worker: null,
+            active: false,
+            rootEl: null,
+          };
 
-    window.removeEventListener("keydown", deactivate);
+          window.removeEventListener("resize", eventHandlers.resize);
+          window.removeEventListener("mousemove", eventHandlers.changeAimPos);
+          window.removeEventListener("mousedown", eventHandlers.shoot);
+          window.removeEventListener("mouseup", eventHandlers.resetShoot);
+          window.removeEventListener("keydown", eventHandlers.handleKeyPress);
+          window.removeEventListener("keyup", eventHandlers.handleKeyUp);
+          window.removeEventListener("contextmenu", preventDefault);
 
-    document
-      .querySelectorAll(`.${config.removedClass}`)
-      .forEach((el) => el.classList.remove(config.removedClass));
-    document.documentElement.style.overflow = "scroll";
+          window.removeEventListener("keydown", deactivate);
 
-    const translateVal = getTranslateY(p.rootEl);
-    p.rootEl.style.transform = "";
-    window.scrollTo(0, -translateVal + window.scrollY);
+          document
+            .querySelectorAll(`.${config.removedClass}`)
+            .forEach((el) => el.classList.remove(config.removedClass));
+          document.documentElement.style.overflow = "scroll";
 
-    config.onRemove && config.onRemove();
-  });
+          const translateVal = getTranslateY(p.rootEl);
+          p.rootEl.style.transform = "";
+          window.scrollTo(0, -translateVal + window.scrollY);
+
+          config.onRemove && config.onRemove();
+        });
+      }
+      case "updated": {
+        const { newRootElTranslateValue } = data;
+        if (newRootElTranslateValue != null)
+          state.rootEl!.style.transform = `translateY(${newRootElTranslateValue}px)`;
+      }
+    }
+  };
 }

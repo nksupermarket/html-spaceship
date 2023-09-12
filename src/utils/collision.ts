@@ -1,7 +1,7 @@
 import { XY } from "../../types/interfaces";
-import { BareCircleBoundary, CircleBoundary } from "../classes/boundaries";
-import Entity from "../classes/Entity";
-import Vector from "../classes/Vector";
+import { BareCircleBoundary } from "../classes/entities/boundaries";
+import Entity from "../classes/entities/Entity";
+import Vector from "../classes/geometric_objects/Vector";
 import { getCenter } from "./getCenter";
 import { getClosestPoint, sqr } from "./math";
 
@@ -114,7 +114,7 @@ function projectCircle(c: BareCircleBoundary, vector: Vector) {
 
 export function getCollisionBtwnPolygonAndCircle(
   p: MockPolygon,
-  c: CircleBoundary
+  c: BareCircleBoundary
 ) {
   let overlap = Infinity;
   let collisionNormal = new Vector(0, 0);

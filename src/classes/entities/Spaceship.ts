@@ -1,22 +1,23 @@
-import { MouseInterface, XY } from "../../types/interfaces";
-import { Axis, Direction } from "../../types/types";
+import { MouseInterface, XY } from "../../../types/interfaces";
+import { Axis, Direction } from "../../../types/types";
 import {
+  checkIfInsideRect,
   getCollisionBtwnPolygonAndCircle,
   getCollisionBtwnPolygons,
-} from "../utils/collision";
-import { SS_DIMENSIONS } from "../utils/constants";
-import { createImage, getExtremities } from "../utils/misc";
-import { CircleBoundary, RectBoundary } from "./boundaries";
+} from "../../utils/collision";
+import { SS_DIMENSIONS } from "../../utils/constants";
+import { getExtremities } from "../../utils/misc";
+import Polygon from "../geometric_objects/Polygon";
+import Boundary, { BareCircleBoundary, BareRectBoundary } from "./boundaries";
 import Bullet from "./Bullet";
 import Entity from "./Entity";
-import Polygon from "./Polygon";
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
 }
 
 const drawRoundRect = function (
-  c: CanvasRenderingContext2D,
+  c: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   x: number,
   y: number,
   width: number,
@@ -72,7 +73,7 @@ const drawRoundRect = function (
 const DISSIPATION_FACTOR = 0.95;
 
 type DecelerateScalars = Record<Axis, number>;
-export type SpaceShipEventState = Pick<
+export type SpaceshipEventState = Pick<
   Spaceship,
   "shotAvailable" | "accelerating"
 >;
@@ -85,12 +86,12 @@ export class Spaceship extends Entity {
   accelerating: boolean;
   readonly MAX_SPEED: number;
   velocity: XY;
-  readonly IMAGE: HTMLImageElement;
+  readonly IMAGE: ImageBitmap;
   readonly CONVEX_POLYGONS: Polygon[];
   readonly BOUNDING_BOX: Polygon;
   colliding: boolean;
 
-  constructor({ x, y }: XY, theme: "dark" | "light", speed: number) {
+  constructor({ x, y }: XY, image: ImageBitmap, speed: number) {
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
     this.MAX_SPEED = speed;
     this.angle = (90 * Math.PI) / 2;
@@ -103,11 +104,7 @@ export class Spaceship extends Entity {
     this.accelerating = false;
     this.bullets = [];
     this.velocity = { x: 0, y: 0 };
-    this.IMAGE = createImage(
-      theme === "light"
-        ? require("../assets/optimized/rocket-lightmode.png").default
-        : require("../assets/optimized/rocket-darkmode.png").default
-    );
+    this.IMAGE = image;
     this.CONVEX_POLYGONS = this.getPolygons();
     this.BOUNDING_BOX = new Polygon(
       [
@@ -134,6 +131,46 @@ export class Spaceship extends Entity {
       { x: this.x + this.width / 2, y: this.y + this.height / 2 }
     );
     this.colliding = false;
+  }
+
+  static getStartPos(boundaries: Boundary[]) {
+    function getRdmPos() {
+      return {
+        x: Math.floor(
+          Math.random() * (window.innerWidth - SS_DIMENSIONS.width)
+        ),
+        y: Math.floor(
+          Math.random() * (window.innerHeight * 0.4 - SS_DIMENSIONS.height) +
+            window.innerHeight * 0.3
+        ),
+      };
+    }
+
+    let { x, y } = getRdmPos();
+    let spaceship = new Entity(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
+
+    let inEmptySpace = false;
+    while (!inEmptySpace) {
+      for (let i = 0; i < boundaries.length; i++) {
+        if (checkIfInsideRect(spaceship, boundaries[i])) {
+          let { x, y } = getRdmPos();
+          spaceship = new Entity(
+            x,
+            y,
+            SS_DIMENSIONS.height,
+            SS_DIMENSIONS.width
+          );
+          continue;
+        }
+      }
+
+      inEmptySpace = true;
+    }
+
+    return {
+      x: spaceship.x,
+      y: spaceship.y,
+    };
   }
 
   move(dir: Direction) {
@@ -216,7 +253,7 @@ export class Spaceship extends Entity {
     }
   }
 
-  handleCollisionWithCircle(boundary: CircleBoundary) {
+  handleCollisionWithCircle(boundary: BareCircleBoundary) {
     if (
       boundary.height === 0 ||
       this.x + 200 < boundary.x ||
@@ -247,7 +284,7 @@ export class Spaceship extends Entity {
     this.resetDeceleration("y");
   }
 
-  handleCollisionWithRect(boundary: RectBoundary) {
+  handleCollisionWithRect(boundary: BareRectBoundary) {
     if (
       boundary.height === 0 ||
       this.x + 200 < boundary.x ||
