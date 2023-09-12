@@ -17,15 +17,6 @@ let state: DeactiveState | ActiveState = {
   windowDimensions: null,
 };
 
-function animate() {
-  state.offscreenCanvas!.draw(
-    state.windowDimensions!,
-    state.gameState!.spaceship,
-    state.gameState!.score.display
-  );
-
-  requestAnimationFrame(animate);
-}
 self.onmessage = async (msg) => {
   const { data } = msg;
   switch (data.event) {
@@ -41,7 +32,6 @@ self.onmessage = async (msg) => {
         windowDimensions: data.windowDimensions,
       };
 
-      animate();
       self.postMessage({ event: "initiated" });
       break;
     }
@@ -56,6 +46,12 @@ self.onmessage = async (msg) => {
           data.boundaries,
           data.shootables
         );
+
+      state.offscreenCanvas!.draw(
+        state.windowDimensions!,
+        state.gameState!.spaceship,
+        state.gameState!.score.display
+      );
 
       self.postMessage({
         event: "updated",
