@@ -1,15 +1,15 @@
-import { MouseInterface, XY } from '../../types/interfaces';
-import { Axis, Direction, Mouse } from '../../types/types';
+import { MouseInterface, XY } from "../../../types/interfaces";
+import { Axis, Direction } from "../../../types/types";
 import {
   getCollisionBtwnPolygonAndCircle,
   getCollisionBtwnPolygons,
-} from '../utils/collision';
-import { SS_DIMENSIONS } from '../utils/constants';
-import { createImage, getExtremities } from '../utils/misc';
-import { CircleBoundary, RectBoundary } from './boundaries';
-import Bullet from './Bullet';
-import Entity from './Entity';
-import Polygon from './Polygon';
+} from "../../utils/collision";
+import { SS_DIMENSIONS } from "../../utils/constants";
+import { createImage, getExtremities } from "../../utils/misc";
+import Polygon from "../geometric_objects/Polygon";
+import Bullet from "./Bullet";
+import Entity from "./Entity";
+import { CircleBoundary, RectBoundary } from "./boundaries";
 
 function easeInCirc(x: number): number {
   return 1 - Math.sqrt(1 - Math.pow(x, 3));
@@ -36,10 +36,10 @@ const drawRoundRect = function (
     lowerLeft: 0,
     lowerRight: 0,
   };
-  if (typeof stroke == 'undefined') {
+  if (typeof stroke == "undefined") {
     stroke = true;
   }
-  if (typeof radius === 'object') {
+  if (typeof radius === "object") {
     let side: keyof typeof radius;
     for (side in radius) {
       const radVal = radius[side];
@@ -79,16 +79,19 @@ export default class Spaceship extends Entity {
   decelerateScalars: DecelerateScalars;
   readonly ACCELERATION_RATE: number;
   accelerating: boolean;
-  readonly MAX_SPEED: number;
+  private readonly _MAX_SPEED: number;
+  public get MAX_SPEED(): number {
+    return this._MAX_SPEED;
+  }
   velocity: XY;
   readonly IMAGE: HTMLImageElement;
   readonly CONVEX_POLYGONS: Polygon[];
   readonly BOUNDING_BOX: Polygon;
   colliding: boolean;
 
-  constructor({ x, y }: XY, theme: 'dark' | 'light', speed: number) {
+  constructor({ x, y }: XY, theme: "dark" | "light", speed: number) {
     super(x, y, SS_DIMENSIONS.height, SS_DIMENSIONS.width);
-    this.MAX_SPEED = speed;
+    this._MAX_SPEED = speed;
     this.angle = (90 * Math.PI) / 2;
     this.shotAvailable = true;
     this.decelerateScalars = {
@@ -100,9 +103,9 @@ export default class Spaceship extends Entity {
     this.bullets = [];
     this.velocity = { x: 0, y: 0 };
     this.IMAGE = createImage(
-      theme === 'light'
-        ? require('../assets/optimized/rocket-lightmode.png').default
-        : require('../assets/optimized/rocket-darkmode.png').default
+      theme === "light"
+        ? require("../../assets/optimized/rocket-lightmode.png").default
+        : require("../../assets/optimized/rocket-darkmode.png").default
     );
     this.CONVEX_POLYGONS = this.getPolygons();
     this.BOUNDING_BOX = new Polygon(
@@ -134,31 +137,31 @@ export default class Spaceship extends Entity {
 
   move(dir: Direction) {
     switch (dir) {
-      case 'left': {
-        this.resetDeceleration('x');
+      case "left": {
+        this.resetDeceleration("x");
 
         this.velocity.x -= this.ACCELERATION_RATE * this.MAX_SPEED;
         if (this.velocity.x < -this.MAX_SPEED)
           this.velocity.x = -this.MAX_SPEED;
         break;
       }
-      case 'right': {
-        this.resetDeceleration('x');
+      case "right": {
+        this.resetDeceleration("x");
 
         this.velocity.x += this.ACCELERATION_RATE * this.MAX_SPEED;
         if (this.velocity.x > this.MAX_SPEED) this.velocity.x = this.MAX_SPEED;
         break;
       }
-      case 'up': {
-        this.resetDeceleration('y');
+      case "up": {
+        this.resetDeceleration("y");
 
         this.velocity.y -= this.ACCELERATION_RATE * this.MAX_SPEED;
         if (this.velocity.y < -this.MAX_SPEED)
           this.velocity.y = -this.MAX_SPEED;
         break;
       }
-      case 'down': {
-        this.resetDeceleration('y');
+      case "down": {
+        this.resetDeceleration("y");
 
         this.velocity.y += this.ACCELERATION_RATE * this.MAX_SPEED;
         if (this.velocity.y > this.MAX_SPEED) this.velocity.y = this.MAX_SPEED;
@@ -172,39 +175,39 @@ export default class Spaceship extends Entity {
 
     for (const [key, value] of Object.entries(extremities)) {
       switch (key) {
-        case 'top': {
+        case "top": {
           if (value < 0) {
             this.updateYPosition(0 - value);
             this.velocity.y = -this.velocity.y * DISSIPATION_FACTOR;
-            this.resetDeceleration('x');
-            this.resetDeceleration('y');
+            this.resetDeceleration("x");
+            this.resetDeceleration("y");
           }
           break;
         }
-        case 'left': {
+        case "left": {
           if (value < 0) {
             this.updateXPosition(0 - value);
             this.velocity.x = -this.velocity.x * DISSIPATION_FACTOR;
-            this.resetDeceleration('x');
-            this.resetDeceleration('y');
+            this.resetDeceleration("x");
+            this.resetDeceleration("y");
           }
           break;
         }
-        case 'bottom': {
+        case "bottom": {
           if (value > bounds.y) {
             this.updateYPosition(bounds.y - value);
             this.velocity.y = -this.velocity.y * DISSIPATION_FACTOR;
-            this.resetDeceleration('x');
-            this.resetDeceleration('y');
+            this.resetDeceleration("x");
+            this.resetDeceleration("y");
           }
           break;
         }
-        case 'right': {
+        case "right": {
           if (value > bounds.x) {
             this.updateXPosition(bounds.x - value);
             this.velocity.x = -this.velocity.x * DISSIPATION_FACTOR;
-            this.resetDeceleration('x');
-            this.resetDeceleration('y');
+            this.resetDeceleration("x");
+            this.resetDeceleration("y");
           }
           break;
         }
@@ -213,14 +216,6 @@ export default class Spaceship extends Entity {
   }
 
   handleCollisionWithCircle(boundary: CircleBoundary) {
-    if (
-      boundary.height === 0 ||
-      this.x + 200 < boundary.x ||
-      this.x > boundary.x + boundary.width + 200 ||
-      this.y + 200 < boundary.y ||
-      this.y > boundary.y + boundary.height + 200
-    )
-      return;
     let collision;
     for (const polygon of this.CONVEX_POLYGONS) {
       collision = getCollisionBtwnPolygonAndCircle(polygon, boundary);
@@ -239,19 +234,11 @@ export default class Spaceship extends Entity {
     this.velocity.x *= DISSIPATION_FACTOR;
     this.velocity.y *= DISSIPATION_FACTOR;
 
-    this.resetDeceleration('x');
-    this.resetDeceleration('y');
+    this.resetDeceleration("x");
+    this.resetDeceleration("y");
   }
 
   handleCollisionWithRect(boundary: RectBoundary) {
-    if (
-      boundary.height === 0 ||
-      this.x + 200 < boundary.x ||
-      this.x > boundary.x + boundary.width + 200 ||
-      this.y + 200 < boundary.y ||
-      this.y > boundary.y + boundary.height + 200
-    )
-      return;
     let collision;
     for (const polygon of this.CONVEX_POLYGONS) {
       collision = getCollisionBtwnPolygons(polygon, boundary);
@@ -269,8 +256,8 @@ export default class Spaceship extends Entity {
       this.velocity.y = -this.velocity.y * DISSIPATION_FACTOR;
     else this.velocity.x = -this.velocity.x * DISSIPATION_FACTOR;
 
-    this.resetDeceleration('x');
-    this.resetDeceleration('y');
+    this.resetDeceleration("x");
+    this.resetDeceleration("y");
   }
 
   updateXPosition(shift = this.velocity.x) {
@@ -352,7 +339,7 @@ export default class Spaceship extends Entity {
         Math.abs(this.velocity.y / this.MAX_SPEED)
       ) * 40;
 
-    c.fillStyle = '#F18805';
+    c.fillStyle = "#F18805";
     drawRoundRect(
       c,
       this.x + 27,

@@ -1,6 +1,6 @@
-import { XY } from '../../types/interfaces';
-import { Axis } from '../../types/types';
-import Entity from './Entity';
+import { XY } from "../../../types/interfaces";
+import { Axis } from "../../../types/types";
+import Entity from "./Entity";
 
 export default class Shootable extends Entity {
   lifePoints: number = 50;
@@ -16,7 +16,7 @@ export default class Shootable extends Entity {
   ) {
     super(x, y, height, width);
     this.el = el;
-    this.circle = window.getComputedStyle(el).borderRadius === '50%';
+    this.circle = window.getComputedStyle(el).borderRadius === "50%";
   }
 
   removeEl(className: string) {
@@ -29,8 +29,8 @@ export default class Shootable extends Entity {
   }
 
   shake(axis: Axis) {
-    const animation = axis === 'y' ? 'quake_y' : 'quake_x';
-    this.el.classList.remove('quake_x', 'quake_y');
+    const animation = axis === "y" ? "quake_y" : "quake_x";
+    this.el.classList.remove("quake_x", "quake_y");
     void this.el.offsetWidth;
     this.el.classList.add(animation);
   }

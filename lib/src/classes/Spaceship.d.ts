@@ -1,9 +1,9 @@
-import { MouseInterface, XY } from '../../types/interfaces';
-import { Axis, Direction } from '../../types/types';
-import { CircleBoundary, RectBoundary } from './boundaries';
-import Bullet from './Bullet';
-import Entity from './Entity';
-import Polygon from './Polygon';
+import { MouseInterface, XY } from "../../types/interfaces";
+import { Axis, Direction } from "../../types/types";
+import { CircleBoundary, RectBoundary } from "./boundaries";
+import Bullet from "./Bullet";
+import Entity from "./Entity";
+import Polygon from "./Polygon";
 declare type DecelerateScalars = Record<Axis, number>;
 export default class Spaceship extends Entity {
     angle: number;
@@ -18,7 +18,7 @@ export default class Spaceship extends Entity {
     readonly CONVEX_POLYGONS: Polygon[];
     readonly BOUNDING_BOX: Polygon;
     colliding: boolean;
-    constructor({ x, y }: XY, theme: 'dark' | 'light', speed: number);
+    constructor({ x, y }: XY, theme: "dark" | "light", speed: number);
     move(dir: Direction): void;
     handleBoundsCollision(bounds: XY): void;
     handleCollisionWithCircle(boundary: CircleBoundary): void;

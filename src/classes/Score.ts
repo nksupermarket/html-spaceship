@@ -1,4 +1,4 @@
-import Shootable from './Shootable';
+import Shootable from "./entities/Shootable";
 
 export default class Score {
   private total: number;

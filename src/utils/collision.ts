@@ -1,10 +1,10 @@
-import { XY } from '../../types/interfaces';
-import { CircleBoundary } from '../classes/boundaries';
-import Bullet from '../classes/Bullet';
-import Entity from '../classes/Entity';
-import Shootable from '../classes/Shootable';
-import Vector from '../classes/Vector';
-import { getClosestPoint, sqr } from './math';
+import { XY } from "../../types/interfaces";
+import Bullet from "../classes/entities/Bullet";
+import Entity from "../classes/entities/Entity";
+import Shootable from "../classes/entities/Shootable";
+import { CircleBoundary } from "../classes/entities/boundaries";
+import Vector from "../classes/geometric_objects/Vector";
+import { getClosestPoint, sqr } from "./math";
 
 export function checkIfInsideRect(rectOne: Entity, rectTwo: Entity) {
   const insideY =

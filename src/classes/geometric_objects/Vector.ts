@@ -1,5 +1,5 @@
-import { XY } from '../../types/interfaces';
-import { sqr } from '../utils/math';
+import { XY } from "../../../types/interfaces";
+import { sqr } from "../../utils/math";
 
 export default class Vector {
   x: number;

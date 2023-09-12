@@ -1,4 +1,4 @@
-import Shootable from './Shootable';
+import Shootable from "../entities/Shootable";
 
 export default class ShootableList {
   list: Shootable[];
@@ -9,7 +9,7 @@ export default class ShootableList {
 
   getList() {
     return Array.from(
-      document.querySelectorAll<HTMLElement>('.shootable_el')
+      document.querySelectorAll<HTMLElement>(".shootable_el")
     ).map((el) => {
       const { x, y, height, width } = el.getBoundingClientRect();
       return new Shootable(x, y, width, height, el);

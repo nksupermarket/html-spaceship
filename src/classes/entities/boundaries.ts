@@ -1,5 +1,5 @@
-import { XY } from '../../types/interfaces';
-import Entity from './Entity';
+import { XY } from "../../../types/interfaces";
+import Entity from "./Entity";
 
 export default class Boundary extends Entity {
   el: HTMLElement;
@@ -24,22 +24,22 @@ export default class Boundary extends Entity {
 }
 
 export class CircleBoundary extends Boundary {
-  readonly kind: 'circle';
+  readonly kind: "circle";
   readonly radius: number;
   constructor(el: HTMLElement) {
     super(el);
-    this.kind = 'circle';
+    this.kind = "circle";
     this.radius = this.width / 2;
   }
 }
 
 export class RectBoundary extends Boundary {
-  readonly kind: 'rect';
+  readonly kind: "rect";
   vertices: XY[];
 
   constructor(el: HTMLElement) {
     super(el);
-    this.kind = 'rect';
+    this.kind = "rect";
     this.vertices = [
       {
         x: this.x,

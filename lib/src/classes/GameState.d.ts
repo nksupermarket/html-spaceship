@@ -1,9 +1,9 @@
-import { Mouse } from '../../types/types';
-import BoundaryList from './BoundaryList';
-import KeyPress from './KeyPress';
-import Score from './Score';
-import ShootableList from './ShootableList';
-import Spaceship from './Spaceship';
+import { Mouse } from "../../types/types";
+import KeyPress from "./KeyPress";
+import Score from "./Score";
+import Spaceship from "./entities/Spaceship";
+import BoundaryList from "./lists/BoundaryList";
+import ShootableList from "./lists/ShootableList";
 export default class GameState {
     spaceship: Spaceship;
     boundaries: BoundaryList;
@@ -17,6 +17,6 @@ export default class GameState {
     readonly REMOVE_CLASS: string;
     readonly ROOT_EL: HTMLElement;
     score: Score;
-    constructor(removeClass: string, theme: 'light' | 'dark', speed: number, rootEl: HTMLElement);
+    constructor(removeClass: string, theme: "light" | "dark", speed: number, rootEl: HTMLElement);
     update(): void;
 }

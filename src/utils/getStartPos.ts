@@ -1,7 +1,7 @@
-import Boundary from '../classes/boundaries';
-import Spaceship from '../classes/Spaceship';
-import { checkIfInsideRect } from './collision';
-import { SS_DIMENSIONS } from './constants';
+import Spaceship from "../classes/entities/Spaceship";
+import Boundary from "../classes/entities/boundaries";
+import { checkIfInsideRect } from "./collision";
+import { SS_DIMENSIONS } from "./constants";
 
 export default function getStartPos(boundaries: Boundary[]) {
   function getRdmPos() {
@@ -14,13 +14,13 @@ export default function getStartPos(boundaries: Boundary[]) {
     };
   }
 
-  let spaceship = new Spaceship(getRdmPos(), 'light', 10);
+  let spaceship = new Spaceship(getRdmPos(), "light", 10);
 
   let inEmptySpace = false;
   while (!inEmptySpace) {
     for (let i = 0; i < boundaries.length; i++) {
       if (checkIfInsideRect(spaceship, boundaries[i])) {
-        spaceship = new Spaceship(getRdmPos(), 'light', 10);
+        spaceship = new Spaceship(getRdmPos(), "light", 10);
         continue;
       }
     }
