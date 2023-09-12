@@ -6,16 +6,14 @@ import { getTranslateY } from "./utils/misc";
 import { wrapWords } from "./utils/wrapWords";
 
 type ActiveState = {
-  worker: Worker;
-  canvas: HTMLCanvasElement;
+  canvas: Canvas;
   gameState: GameState;
   active: true;
 };
 type DeactiveState = {
   [K in keyof ActiveState]: K extends "active" ? false : null;
 };
-const state: DeactiveState | ActiveState = {
-  worker: null,
+let state: DeactiveState | ActiveState = {
   canvas: null,
   gameState: null,
   active: false,
@@ -24,10 +22,7 @@ const state: DeactiveState | ActiveState = {
 function animate() {
   if (!state.active) return;
   state.gameState.update();
-  state.worker.postMessage({
-    spaceship: state.gameState.spaceship,
-    score: state.gameState.score.display,
-  });
+  state.canvas.draw(state.gameState.spaceship, state.gameState.score.display);
   requestAnimationFrame(animate);
 }
 
@@ -65,33 +60,33 @@ function getEventHandlers(keysConfig: KeysConfig) {
   const onKeyPress = toggleKeyPress(keysConfig, state);
   return {
     resizeCanvas: () => {
-      state.gameState.shootables.list = state.gameState.shootables.getList();
-      state.gameState.boundaries.list = state.gameState.boundaries.getList();
-      state.canvas.setCorrectSize();
+      state.gameState!.shootables.list = state.gameState!.shootables.getList();
+      state.gameState!.boundaries.list = state.gameState!.boundaries.getList();
+      state.canvas?.setCorrectSize();
     },
 
     changeAimPos: (e: MouseEvent) => {
-      state.gameState.mouse.x = e.clientX;
-      state.gameState.mouse.y = e.clientY;
+      state.gameState!.mouse.x = e.clientX;
+      state.gameState!.mouse.y = e.clientY;
     },
 
     shoot: (e: MouseEvent) => {
       e.preventDefault();
-      state.gameState.keyPress.keys.click.pressed = true;
-      if (!state.gameState.keyPress.keys.click.timer)
-        state.gameState.keyPress.setTimer(
+      state.gameState!.keyPress.keys.click.pressed = true;
+      if (!state.gameState!.keyPress.keys.click.timer)
+        state.gameState!.keyPress.setTimer(
           "click",
-          () => (state.gameState.spaceship.shotAvailable = true),
+          () => (state.gameState!.spaceship.shotAvailable = true),
           250
         );
     },
 
     resetShoot: (e: MouseEvent) => {
       e.preventDefault();
-      state.gameState.spaceship.shotAvailable = true;
-      state.gameState.keyPress.keys.click.pressed = false;
-      if (state.gameState.keyPress.keys.click.timer)
-        state.gameState.keyPress.removeTimer();
+      state.gameState!.spaceship.shotAvailable = true;
+      state.gameState!.keyPress.keys.click.pressed = false;
+      if (state.gameState!.keyPress.keys.click.timer)
+        state.gameState!.keyPress.removeTimer();
     },
 
     handleKeyPress: (e: KeyboardEvent) => {
@@ -157,15 +152,11 @@ export default function run(config: Config) {
   if (p.wrapWordsClass) wrapWords(p.wrapWordsClass);
   document.documentElement.style.overflow = "hidden";
 
-  const proxy = state as unknown as ActiveState;
-  proxy.active = true;
-  proxy.canvas = new Canvas();
-  proxy.gameState = new GameState(
-    config.removedClass,
-    p.theme,
-    p.speed,
-    p.rootEl
-  );
+  state = {
+    active: true,
+    canvas: new Canvas(),
+    gameState: new GameState(config.removedClass, p.theme, p.speed, p.rootEl),
+  };
   p.rootEl.style.transform = "translateY(0)";
   const eventHandlers = getEventHandlers(p.keys)!;
 
@@ -190,11 +181,12 @@ export default function run(config: Config) {
     if (e.key != p.keys.deactivate) return;
     e.preventDefault();
 
-    proxy.canvas?.remove();
-    state.active = false;
-    state.canvas = null;
-    state.gameState = null;
-
+    state.canvas?.remove();
+    state = {
+      active: false,
+      canvas: null,
+      gameState: null,
+    };
     window.removeEventListener("resize", eventHandlers.resizeCanvas);
     window.removeEventListener("mousemove", eventHandlers.changeAimPos);
     window.removeEventListener("mousedown", eventHandlers.shoot);
