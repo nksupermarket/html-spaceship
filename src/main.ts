@@ -1,13 +1,21 @@
 import { Config, KeysConfig } from "../types/interfaces";
-import { ActiveState, Deactive, Direction } from "../types/types";
-import { Canvas } from "./classes/Canvas";
+import { Deactive, Direction } from "../types/types";
 import { Spaceship } from "./classes/entities/Spaceship";
 import { BoundaryList } from "./classes/lists/BoundaryList";
 import { ShootableList } from "./classes/lists/ShootableList";
 import "./style.css";
+import { generateCanvasEl } from "./utils/generateCanvasEl";
 import { createImageBlob, getTranslateY } from "./utils/misc";
 import wrapWords from "./wrapWords";
 
+type ActiveState = {
+  canvas: HTMLCanvasElement;
+  boundaries: BoundaryList;
+  shootables: ShootableList;
+  worker: Worker;
+  active: true;
+  rootEl: HTMLElement;
+};
 type DeactiveState = Deactive<ActiveState>;
 let state: DeactiveState | ActiveState = {
   canvas: null,
@@ -18,45 +26,45 @@ let state: DeactiveState | ActiveState = {
   rootEl: null,
 };
 
-function animate() {
-  if (!state.active) return;
+function update() {
+  setInterval(() => {
+    if (!state.active) return;
 
-  state.worker.postMessage({
-    event: "update",
-    scrollY: window.scrollY,
-    rootElTranslateYValue: getTranslateY(state.rootEl),
-    distanceFromTopViewportToBottomOfDoc: Math.floor(
-      document.documentElement.scrollHeight - window.innerHeight
-    ),
-    boundaries: state.boundaries.convertToBare(),
-    shootables: state.shootables.convertToBare(),
-  });
-  for (
-    let i = Math.max(
-      state.shootables.list.length,
-      state.boundaries.list.length
-    );
-    i >= 0;
-    i--
-  ) {
-    if (i < state.shootables.list.length) {
-      const shootable = state.shootables.list[i];
-      shootable.update();
-      if (shootable.lifePoints <= 0) {
-        // state.score.updateTotal(shootable);
-        // state.shootables.removeEl(i, state.REMOVE_CLASS);
+    state.worker.postMessage({
+      event: "update",
+      scrollY: window.scrollY,
+      rootElTranslateYValue: getTranslateY(state.rootEl),
+      distanceFromTopViewportToBottomOfDoc: Math.floor(
+        document.documentElement.scrollHeight - window.innerHeight
+      ),
+      boundaries: state.boundaries.convertToBare(),
+      shootables: state.shootables.convertToBare(),
+    });
+    for (
+      let i = Math.max(
+        state.shootables.list.length,
+        state.boundaries.list.length
+      );
+      i >= 0;
+      i--
+    ) {
+      if (i < state.shootables.list.length) {
+        const shootable = state.shootables.list[i];
+        shootable.update();
+        if (shootable.lifePoints <= 0) {
+          // state.score.updateTotal(shootable);
+          // state.shootables.removeEl(i, state.REMOVE_CLASS);
+        }
+      }
+      if (i < state.boundaries.list.length) {
+        const boundary = state.boundaries.list[i];
+
+        boundary.update();
+        // if (boundary.el.classList.contains(state.REMOVE_CLASS))
+        //   state.boundaries.removeBoundary(i);
       }
     }
-    if (i < state.boundaries.list.length) {
-      const boundary = state.boundaries.list[i];
-
-      boundary.update();
-      // if (boundary.el.classList.contains(state.REMOVE_CLASS))
-      //   state.boundaries.removeBoundary(i);
-    }
-  }
-
-  requestAnimationFrame(animate);
+  }, 15);
 }
 
 const toggleKeyPress =
@@ -190,7 +198,7 @@ export default async function run(config: Config) {
 
   state = {
     active: true,
-    canvas: new Canvas(),
+    canvas: generateCanvasEl(),
     boundaries: new BoundaryList(),
     shootables: new ShootableList(),
     worker: new Worker(`${p.workerDir}/webWorker.js`, {
@@ -206,7 +214,7 @@ export default async function run(config: Config) {
         : require("./assets/optimized/rocket-darkmode.png").default
     )
   );
-  const offscreen = state.canvas.el.transferControlToOffscreen();
+  const offscreen = state.canvas.transferControlToOffscreen();
   state.worker.postMessage(
     {
       event: "init",
@@ -246,7 +254,7 @@ export default async function run(config: Config) {
 
         window.addEventListener("contextmenu", preventDefault);
 
-        animate();
+        update();
 
         window.addEventListener("keydown", function deactivate(e) {
           if (e.key != p.keys.deactivate) return;

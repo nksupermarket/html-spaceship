@@ -3,6 +3,7 @@ import { Dimensions } from "../../types/types";
 import { Spaceship } from "./entities/Spaceship";
 export declare class Canvas {
     el: HTMLCanvasElement;
+    private ctx;
     scoreColor: string;
     constructor(scoreColor?: string);
     setCorrectSize(): void;
@@ -11,6 +12,7 @@ export declare class Canvas {
 }
 export declare class CanvasOffScreen {
     offscreen: OffscreenCanvas;
+    private ctx;
     scoreColor: string;
     constructor(offscreen: OffscreenCanvas, scoreColor?: string);
     draw(windowDimensions: Dimensions, spaceship: Spaceship, score: number): void;

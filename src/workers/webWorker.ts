@@ -1,14 +1,12 @@
 import { Deactive, Dimensions, Direction } from "../../types/types";
 import { CanvasOffScreen } from "../classes/Canvas";
 import { activateBulletSprites } from "../classes/entities/Bullet";
-import { FpsTracker } from "../classes/FpsTracker";
 import { WebWorkerGameState } from "../classes/GameState";
 
 type ActiveState = {
   active: true;
   gameState: WebWorkerGameState;
   offscreenCanvas: CanvasOffScreen;
-  fpsTracker: FpsTracker;
   windowDimensions: Dimensions;
 };
 type DeactiveState = Deactive<ActiveState>;
@@ -16,12 +14,16 @@ let state: DeactiveState | ActiveState = {
   active: false,
   gameState: null,
   offscreenCanvas: null,
-  fpsTracker: null,
   windowDimensions: null,
 };
 
 function animate() {
-  // }
+  state.offscreenCanvas!.draw(
+    state.windowDimensions!,
+    state.gameState!.spaceship,
+    state.gameState!.score.display
+  );
+
   requestAnimationFrame(animate);
 }
 self.onmessage = async (msg) => {
@@ -36,10 +38,10 @@ self.onmessage = async (msg) => {
           y: data.windowDimensions.height,
         }),
         offscreenCanvas: new CanvasOffScreen(data.offscreen, data.scoreColor),
-        fpsTracker: new FpsTracker(),
         windowDimensions: data.windowDimensions,
       };
 
+      animate();
       self.postMessage({ event: "initiated" });
       break;
     }
@@ -61,11 +63,6 @@ self.onmessage = async (msg) => {
         shootablesHitAxis,
       });
 
-      state.offscreenCanvas!.draw(
-        state.windowDimensions!,
-        state.gameState!.spaceship,
-        state.gameState!.score.display
-      );
       break;
     }
 
