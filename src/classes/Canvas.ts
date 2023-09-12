@@ -3,10 +3,12 @@ import { Spaceship } from "./entities/Spaceship";
 
 export class Canvas {
   el: HTMLCanvasElement;
+  private ctx: Option<CanvasRenderingContext2D>;
   scoreColor: string;
 
   constructor(scoreColor = "#1DB954") {
     this.el = document.createElement("canvas");
+    this.ctx = this.el.getContext("2d");
     this.el.classList.add("space");
     document.documentElement.appendChild(this.el);
     this.setCorrectSize();
@@ -19,7 +21,7 @@ export class Canvas {
   }
 
   draw(spaceship: Spaceship, score: number) {
-    const c = this.el.getContext("2d");
+    const c = this.ctx;
     if (!c) return;
     c.globalAlpha = 1;
     c.clearRect(0, 0, window.innerWidth, window.innerHeight);
@@ -53,7 +55,7 @@ export class Canvas {
 
 export class CanvasOffScreen {
   offscreen: OffscreenCanvas;
-  ctx: Option<OffscreenCanvasRenderingContext2D>;
+  private ctx: Option<OffscreenCanvasRenderingContext2D>;
   scoreColor: string;
 
   constructor(offscreen: OffscreenCanvas, scoreColor = "#1DB954") {

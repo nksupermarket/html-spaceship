@@ -18,45 +18,45 @@ let state: DeactiveState | ActiveState = {
   rootEl: null,
 };
 
-function update() {
-  setInterval(() => {
-    if (!state.active) return;
+function animate() {
+  if (!state.active) return;
 
-    state.worker.postMessage({
-      event: "update",
-      scrollY: window.scrollY,
-      rootElTranslateYValue: getTranslateY(state.rootEl),
-      distanceFromTopViewportToBottomOfDoc: Math.floor(
-        document.documentElement.scrollHeight - window.innerHeight
-      ),
-      boundaries: state.boundaries.convertToBare(),
-      shootables: state.shootables.convertToBare(),
-    });
-    for (
-      let i = Math.max(
-        state.shootables.list.length,
-        state.boundaries.list.length
-      );
-      i >= 0;
-      i--
-    ) {
-      if (i < state.shootables.list.length) {
-        const shootable = state.shootables.list[i];
-        shootable.update();
-        if (shootable.lifePoints <= 0) {
-          // state.score.updateTotal(shootable);
-          // state.shootables.removeEl(i, state.REMOVE_CLASS);
-        }
-      }
-      if (i < state.boundaries.list.length) {
-        const boundary = state.boundaries.list[i];
-
-        boundary.update();
-        // if (boundary.el.classList.contains(state.REMOVE_CLASS))
-        //   state.boundaries.removeBoundary(i);
+  state.worker.postMessage({
+    event: "update",
+    scrollY: window.scrollY,
+    rootElTranslateYValue: getTranslateY(state.rootEl),
+    distanceFromTopViewportToBottomOfDoc: Math.floor(
+      document.documentElement.scrollHeight - window.innerHeight
+    ),
+    boundaries: state.boundaries.convertToBare(),
+    shootables: state.shootables.convertToBare(),
+  });
+  for (
+    let i = Math.max(
+      state.shootables.list.length,
+      state.boundaries.list.length
+    );
+    i >= 0;
+    i--
+  ) {
+    if (i < state.shootables.list.length) {
+      const shootable = state.shootables.list[i];
+      shootable.update();
+      if (shootable.lifePoints <= 0) {
+        // state.score.updateTotal(shootable);
+        // state.shootables.removeEl(i, state.REMOVE_CLASS);
       }
     }
-  }, 15);
+    if (i < state.boundaries.list.length) {
+      const boundary = state.boundaries.list[i];
+
+      boundary.update();
+      // if (boundary.el.classList.contains(state.REMOVE_CLASS))
+      //   state.boundaries.removeBoundary(i);
+    }
+  }
+
+  requestAnimationFrame(animate);
 }
 
 const toggleKeyPress =
@@ -246,7 +246,7 @@ export default async function run(config: Config) {
 
         window.addEventListener("contextmenu", preventDefault);
 
-        update();
+        animate();
 
         window.addEventListener("keydown", function deactivate(e) {
           if (e.key != p.keys.deactivate) return;
@@ -284,6 +284,7 @@ export default async function run(config: Config) {
           config.onRemove && config.onRemove();
         });
       }
+
       case "updated": {
         const { newRootElTranslateValue } = data;
         if (newRootElTranslateValue != null)

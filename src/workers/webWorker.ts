@@ -21,11 +21,6 @@ let state: DeactiveState | ActiveState = {
 };
 
 function animate() {
-  state.offscreenCanvas!.draw(
-    state.windowDimensions!,
-    state.gameState!.spaceship,
-    state.gameState!.score.display
-  );
   // }
   requestAnimationFrame(animate);
 }
@@ -44,8 +39,6 @@ self.onmessage = async (msg) => {
         fpsTracker: new FpsTracker(),
         windowDimensions: data.windowDimensions,
       };
-
-      animate();
 
       self.postMessage({ event: "initiated" });
       break;
@@ -67,6 +60,12 @@ self.onmessage = async (msg) => {
         newRootElTranslateValue,
         shootablesHitAxis,
       });
+
+      state.offscreenCanvas!.draw(
+        state.windowDimensions!,
+        state.gameState!.spaceship,
+        state.gameState!.score.display
+      );
       break;
     }
 
